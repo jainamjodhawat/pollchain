@@ -21,6 +21,7 @@ export interface Proposal {
   end_ledger: number;
   status: "Active" | "Passed" | "Failed" | "Executed" | "Cancelled";
   created_at: number;
+  tags: string[];
 }
 
 function normalise(raw: RawProposal): Proposal {
@@ -41,7 +42,13 @@ function normalise(raw: RawProposal): Proposal {
     start_ledger: Number(raw.start_ledger),
     end_ledger: Number(raw.end_ledger),
     status: statusTag as Proposal["status"],
-    created_at: Number(raw.created_at) * 1000, // contract stores unix seconds
+    created_at: Number(raw.created_at) * 1000,
+    tags: (() => {
+      try {
+        const parsed = JSON.parse(String(raw.calldata));
+        return Array.isArray(parsed.tags) ? parsed.tags : [];
+      } catch { return []; }
+    })(),
   };
 }
 

@@ -4,29 +4,22 @@ import { useProposals } from "../hooks/useProposals";
 import ProposalCard from "../components/ProposalCard";
 
 type StatusFilter = "All" | "Active" | "Passed" | "Failed" | "Executed" | "Cancelled";
+const ALL_TAGS = ["DeFi", "Community", "Technical", "Treasury", "Other"];
 
 export default function Proposals() {
   const { proposals, loading, error } = useProposals();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
 
   const filtered = proposals.filter((p) => {
-    const matchesSearch =
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "All" || p.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" || p.status === statusFilter;
+    const matchesTag = !tagFilter || p.tags.includes(tagFilter);
+    return matchesSearch && matchesStatus && matchesTag;
   });
 
-  const statusOptions: StatusFilter[] = [
-    "All",
-    "Active",
-    "Passed",
-    "Failed",
-    "Executed",
-    "Cancelled",
-  ];
+  const statusOptions: StatusFilter[] = ["All", "Active", "Passed", "Failed", "Executed", "Cancelled"];
 
   return (
     <div className="page-wrapper">
@@ -38,50 +31,24 @@ export default function Proposals() {
         </div>
 
         {/* Filters */}
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            marginBottom: 28,
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
-          {/* Search */}
+        <div style={{ display: "flex", gap: 12, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
           <div style={{ position: "relative", flex: "1 1 240px" }}>
-            <Search
-              size={16}
-              style={{
-                position: "absolute",
-                left: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--color-text-muted)",
-              }}
-            />
-            <input
-              className="form-input"
-              style={{ paddingLeft: 36 }}
-              placeholder="Search proposals..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--color-text-muted)" }} />
+            <input className="form-input" style={{ paddingLeft: 36 }} placeholder="Search proposals..." value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-
-          {/* Status filter */}
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {statusOptions.map((s) => (
-              <button
-                key={s}
-                className={`btn btn-sm ${
-                  statusFilter === s ? "btn-primary" : "btn-ghost"
-                }`}
-                onClick={() => setStatusFilter(s)}
-              >
-                {s}
-              </button>
+              <button key={s} className={`btn btn-sm ${statusFilter === s ? "btn-primary" : "btn-ghost"}`} onClick={() => setStatusFilter(s)}>{s}</button>
             ))}
           </div>
+        </div>
+
+        {/* Tag filter */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
+          <button className={`btn btn-sm ${!tagFilter ? "btn-primary" : "btn-ghost"}`} onClick={() => setTagFilter(null)}>All Tags</button>
+          {ALL_TAGS.map((tag) => (
+            <button key={tag} className={`btn btn-sm ${tagFilter === tag ? "btn-primary" : "btn-ghost"}`} onClick={() => setTagFilter(tagFilter === tag ? null : tag)}>{tag}</button>
+          ))}
         </div>
 
         {/* Results count */}

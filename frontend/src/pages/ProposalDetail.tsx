@@ -358,16 +358,28 @@ export default function ProposalDetail() {
 
             {/* Calldata */}
             <div className="card" style={{ padding: 28 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 16,
-                }}
-              >
-                <Code size={18} color="var(--color-accent)" />
-                <h3>Execution Calldata</h3>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Code size={18} color="var(--color-accent)" />
+                  <h3>Execution Calldata</h3>
+                </div>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => {
+                    const rows = [
+                      ["proposal_id", "title", "status", "yes_votes_poll", "no_votes_poll", "abstain_votes_poll", "total_votes_poll", "start_ledger", "end_ledger", "proposer"],
+                      [proposal.id, `"${proposal.title}"`, proposal.status, formatPoll(proposal.yes_votes), formatPoll(proposal.no_votes), formatPoll(proposal.abstain_votes), formatPoll(proposal.yes_votes + proposal.no_votes + proposal.abstain_votes), proposal.start_ledger, proposal.end_ledger, proposal.proposer],
+                    ];
+                    const csv = rows.map((r) => r.join(",")).join("\n");
+                    const blob = new Blob([csv], { type: "text/csv" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url; a.download = `proposal-${proposal.id}.csv`; a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  Export CSV
+                </button>
               </div>
               <pre
                 style={{

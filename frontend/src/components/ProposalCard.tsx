@@ -105,6 +105,17 @@ export default function ProposalCard({ proposal }: Props) {
             Ends ledger #{proposal.end_ledger}
           </span>
         </div>
+
+        {/* Tags */}
+        {proposal.tags && proposal.tags.length > 0 && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {proposal.tags.map((tag) => (
+              <span key={tag} style={{ padding: "2px 10px", borderRadius: "var(--radius-full)", fontSize: "0.75rem", fontWeight: 600, background: "var(--color-accent-lighter)", color: "var(--color-accent)" }}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </Link>
   );

@@ -262,3 +262,90 @@ export async function finalizeProposal(
     u64Val(proposalId),
   ]);
 }
+
+// ── Faucet contract ───────────────────────────────────────────────────────────
+
+import { FAUCET_CONTRACT_ID } from "./constants";
+
+export async function fetchFaucetConfig() {
+  return simulateRead(FAUCET_CONTRACT_ID, "get_config");
+}
+
+export async function fetchLastClaim(address: string): Promise<number | null> {
+  try {
+    const result = await simulateRead(FAUCET_CONTRACT_ID, "get_last_claim", [
+      addressVal(address),
+    ]);
+    return result != null ? Number(result) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchFaucetReserve(): Promise<bigint> {
+  try {
+    const result = await simulateRead(FAUCET_CONTRACT_ID, "get_reserve");
+    return BigInt(result as string | number | bigint);
+  } catch {
+    return 0n;
+  }
+}
+
+export async function claimFaucet(publicKey: string): Promise<string> {
+  return invokeContract(publicKey, FAUCET_CONTRACT_ID, "claim", [
+    addressVal(publicKey),
+  ]);
+}
+
+// ── Treasury contract ─────────────────────────────────────────────────────────
+
+import { TREASURY_CONTRACT_ID, DELEGATION_CONTRACT_ID } from "./constants";
+
+export async function fetchTreasuryBalance(): Promise<bigint> {
+  try {
+    const r = await simulateRead(TREASURY_CONTRACT_ID, "get_balance");
+    return BigInt(r as string | number | bigint);
+  } catch { return 0n; }
+}
+
+export async function fetchTreasuryTxs(): Promise<unknown[]> {
+  try {
+    return (await simulateRead(TREASURY_CONTRACT_ID, "get_transactions") as unknown[]) ?? [];
+  } catch { return []; }
+}
+
+export async function depositTreasury(publicKey: string, amount: bigint): Promise<string> {
+  return invokeContract(publicKey, TREASURY_CONTRACT_ID, "deposit", [
+    addressVal(publicKey),
+    nativeToScVal(amount, { type: "i128" }),
+  ]);
+}
+
+// ── Delegation contract ───────────────────────────────────────────────────────
+
+export async function fetchDelegate(address: string): Promise<string | null> {
+  try {
+    const r = await simulateRead(DELEGATION_CONTRACT_ID, "get_delegate", [addressVal(address)]);
+    return r ? String(r) : null;
+  } catch { return null; }
+}
+
+export async function fetchVotingPower(address: string): Promise<bigint> {
+  try {
+    const r = await simulateRead(DELEGATION_CONTRACT_ID, "get_voting_power", [addressVal(address)]);
+    return BigInt(r as string | number | bigint);
+  } catch { return 0n; }
+}
+
+export async function delegateTo(publicKey: string, delegatee: string): Promise<string> {
+  return invokeContract(publicKey, DELEGATION_CONTRACT_ID, "delegate", [
+    addressVal(publicKey),
+    addressVal(delegatee),
+  ]);
+}
+
+export async function undelegateVotes(publicKey: string): Promise<string> {
+  return invokeContract(publicKey, DELEGATION_CONTRACT_ID, "undelegate", [
+    addressVal(publicKey),
+  ]);
+}

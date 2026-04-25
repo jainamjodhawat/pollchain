@@ -20,11 +20,14 @@ PollChain is a lightweight governance platform that lets any community create pr
 
 ## Smart Contracts
 
-| Contract | Description |
-|---|---|
-| `governance_token` | SEP-41 POLL token — voting power |
-| `voting` | Proposal creation, voting, finalization |
-| `execution` | Called via inter-contract call when proposals pass |
+| Contract | Description | Stellar Expert |
+|---|---|---|
+| `governance_token` | SEP-41 POLL token — voting power | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/REPLACE_GOVERNANCE_TOKEN_CONTRACT_ID) |
+| `voting` | Proposal creation, voting, finalization | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/REPLACE_VOTING_CONTRACT_ID) |
+| `execution` | Called via inter-contract call when proposals pass | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/REPLACE_EXECUTION_CONTRACT_ID) |
+
+> Replace `REPLACE_*_CONTRACT_ID` with the actual contract IDs after deploying to testnet.
+> Change `testnet` to `public` in the URLs when deploying to mainnet.
 
 ### Architecture
 

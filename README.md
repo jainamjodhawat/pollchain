@@ -6,7 +6,7 @@ PollChain is a lightweight governance platform that lets any community create pr
 
 ## Live Demo
 
-🌐 [pollchain.vercel.app](https://pollchain.vercel.app)
+🌐 [dist-six-psi-56.vercel.app](https://dist-six-psi-56.vercel.app)
 
 ## Features
 

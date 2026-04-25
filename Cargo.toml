@@ -3,6 +3,9 @@ members = [
     "contracts/governance_token",
     "contracts/voting",
     "contracts/execution",
+    "contracts/faucet",
+    "contracts/treasury",
+    "contracts/delegation",
 ]
 resolver = "2"
 

@@ -10,6 +10,12 @@ export const VOTING_CONTRACT_ID =
   import.meta.env.VITE_VOTING_CONTRACT_ID || "";
 export const EXECUTION_CONTRACT_ID =
   import.meta.env.VITE_EXECUTION_CONTRACT_ID || "";
+export const FAUCET_CONTRACT_ID =
+  import.meta.env.VITE_FAUCET_CONTRACT_ID || "";
+export const TREASURY_CONTRACT_ID =
+  import.meta.env.VITE_TREASURY_CONTRACT_ID || "";
+export const DELEGATION_CONTRACT_ID =
+  import.meta.env.VITE_DELEGATION_CONTRACT_ID || "";
 
 // Token config
 export const TOKEN_DECIMALS = 7;

@@ -20,14 +20,13 @@ PollChain is a lightweight governance platform that lets any community create pr
 
 ## Smart Contracts
 
-| Contract | Description | Stellar Expert |
+| Contract | Contract ID | Stellar Expert |
 |---|---|---|
-| `governance_token` | SEP-41 POLL token — voting power | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/REPLACE_GOVERNANCE_TOKEN_CONTRACT_ID) |
-| `voting` | Proposal creation, voting, finalization | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/REPLACE_VOTING_CONTRACT_ID) |
-| `execution` | Called via inter-contract call when proposals pass | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/REPLACE_EXECUTION_CONTRACT_ID) |
+| `governance_token` | `CDMDAQ3WHWL3APQMDX2ATFX3DDO63RT75QHCH44WZVZDLDWMOTBIWNFF` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CDMDAQ3WHWL3APQMDX2ATFX3DDO63RT75QHCH44WZVZDLDWMOTBIWNFF) |
+| `voting` | `CBINGSMC4YVN4YIDGAUMSEHVUP3DMDI7X56EMYATNTNQKEMXHVTQVTNN` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CBINGSMC4YVN4YIDGAUMSEHVUP3DMDI7X56EMYATNTNQKEMXHVTQVTNN) |
+| `execution` | `CCWGLLESMFOAKZXF6DAGA6PYTNEFI2HCR3PGNMMSUHFGYJJDBSSWAKCP` | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CCWGLLESMFOAKZXF6DAGA6PYTNEFI2HCR3PGNMMSUHFGYJJDBSSWAKCP) |
 
-> Replace `REPLACE_*_CONTRACT_ID` with the actual contract IDs after deploying to testnet.
-> Change `testnet` to `public` in the URLs when deploying to mainnet.
+> Network: **Stellar Testnet** | Deployed by: `GC5HL2KXTCEXGZU4N6QIDQLIXW6HSFYEZV7ELAEEHDL4EHUMVSTZCPX6`
 
 ### Architecture
 

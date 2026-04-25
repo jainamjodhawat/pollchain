@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Info, CheckCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Info, CheckCircle, ExternalLink } from "lucide-react";
 import { useWallet } from "../hooks/useWallet";
+import { usePollBalance } from "../hooks/usePollBalance";
+import { createProposal } from "../utils/contracts";
+import { formatPoll } from "../utils/stellar";
+import { NETWORK_PASSPHRASE } from "../utils/constants";
 
 interface FormData {
   title: string;
@@ -33,14 +37,17 @@ const CALLDATA_TEMPLATES = [
 ];
 
 export default function CreateProposal() {
+  const navigate = useNavigate();
   const { wallet, connect } = useWallet();
+  const { balance } = usePollBalance(wallet.publicKey);
+
   const [form, setForm] = useState<FormData>({
     title: "",
     description: "",
     calldata: CALLDATA_TEMPLATES[0].value,
   });
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
@@ -51,16 +58,23 @@ export default function CreateProposal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!wallet.connected) {
+    if (!wallet.connected || !wallet.publicKey) {
       await connect();
       return;
     }
     setSubmitting(true);
     setError(null);
     try {
+      // Validate JSON before sending
       JSON.parse(form.calldata);
-      await new Promise((r) => setTimeout(r, 2000));
-      setSuccess(true);
+
+      const hash = await createProposal(
+        wallet.publicKey,
+        form.title,
+        form.description,
+        form.calldata
+      );
+      setTxHash(hash);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Transaction failed";
       setError(
@@ -73,7 +87,7 @@ export default function CreateProposal() {
     }
   };
 
-  if (success) {
+  if (txHash) {
     return (
       <div className="page-wrapper">
         <div className="container">
@@ -91,19 +105,38 @@ export default function CreateProposal() {
               color="var(--color-passed)"
               style={{ margin: "0 auto 16px" }}
             />
-            <h2 style={{ marginBottom: 12 }}>Proposal Created!</h2>
-            <p style={{ marginBottom: 28 }}>
-              Your proposal "<strong>{form.title}</strong>" has been submitted
-              on-chain. The community can now vote on it.
+            <h2 style={{ marginBottom: 12 }}>Proposal Submitted On-Chain!</h2>
+            <p style={{ marginBottom: 8 }}>
+              Your proposal "<strong>{form.title}</strong>" has been recorded on
+              the Stellar testnet.
             </p>
+            <a
+              href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: "0.8125rem",
+                color: "var(--color-accent)",
+                marginBottom: 28,
+              }}
+            >
+              View transaction on Stellar Expert
+              <ExternalLink size={12} />
+            </a>
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <Link to="/proposals" className="btn btn-primary">
+              <button
+                className="btn btn-primary"
+                onClick={() => navigate("/proposals")}
+              >
                 View Proposals
-              </Link>
+              </button>
               <button
                 className="btn btn-secondary"
                 onClick={() => {
-                  setSuccess(false);
+                  setTxHash(null);
                   setForm({
                     title: "",
                     description: "",
@@ -144,14 +177,31 @@ export default function CreateProposal() {
           <div className="card" style={{ padding: 32 }}>
             <h2 style={{ marginBottom: 8 }}>Create Proposal</h2>
             <p style={{ marginBottom: 28 }}>
-              Submit a governance proposal for the PollChain community to vote on.
+              Submit a governance proposal on-chain. Requires Freighter wallet
+              and at least 100 POLL tokens.
             </p>
 
-            {!wallet.connected && (
+            {!wallet.connected ? (
               <div className="alert alert-info" style={{ marginBottom: 24 }}>
                 <Info size={16} />
-                Connect your wallet to create a proposal. You need at least 100
-                POLL tokens.
+                Connect your Freighter wallet to create a proposal.
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: "var(--color-accent-lighter)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "10px 14px",
+                  marginBottom: 24,
+                  fontSize: "0.875rem",
+                  color: "var(--color-accent)",
+                  fontWeight: 600,
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span>Your POLL balance</span>
+                <span>{formatPoll(balance)} POLL</span>
               </div>
             )}
 
@@ -235,7 +285,7 @@ export default function CreateProposal() {
                   }}
                 />
                 <span className="form-hint">
-                  JSON data passed to the Execution contract when this proposal
+                  JSON passed to the Execution contract when this proposal
                   passes.
                 </span>
               </div>
@@ -254,16 +304,13 @@ export default function CreateProposal() {
               >
                 {submitting ? (
                   <>
-                    <span
-                      className="spinner"
-                      style={{ width: 18, height: 18 }}
-                    />
-                    Submitting...
+                    <span className="spinner" style={{ width: 18, height: 18 }} />
+                    Submitting on-chain...
                   </>
                 ) : !wallet.connected ? (
                   "Connect Wallet to Submit"
                 ) : (
-                  "Submit Proposal"
+                  "Submit Proposal On-Chain"
                 )}
               </button>
             </form>

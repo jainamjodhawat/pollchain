@@ -5,8 +5,8 @@ import ProposalCard from "../components/ProposalCard";
 import { formatPoll } from "../utils/stellar";
 
 export default function Home() {
-  const stats = useStats();
   const { proposals, loading } = useProposals();
+  const stats = useStats(proposals);
   const activeProposals = proposals.filter((p) => p.status === "Active");
 
   return (
@@ -58,12 +58,6 @@ export default function Home() {
             <div className="stat-item">
               <div className="stat-value">{stats.executedProposals}</div>
               <div className="stat-label">Executed</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">
-                {stats.totalVoters.toLocaleString()}
-              </div>
-              <div className="stat-label">Token Holders</div>
             </div>
             <div className="stat-item">
               <div className="stat-value">

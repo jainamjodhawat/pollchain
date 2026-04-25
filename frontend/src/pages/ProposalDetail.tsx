@@ -9,9 +9,13 @@ import {
   MinusCircle,
   Code,
   AlertCircle,
+  ExternalLink,
+  RefreshCw,
 } from "lucide-react";
-import { useProposals } from "../hooks/useProposals";
+import { useProposal } from "../hooks/useProposals";
 import { useWallet } from "../hooks/useWallet";
+import { usePollBalance } from "../hooks/usePollBalance";
+import { castVote, fetchVote, finalizeProposal } from "../utils/contracts";
 import VoteModal from "../components/VoteModal";
 import {
   formatPoll,
@@ -20,35 +24,74 @@ import {
   statusLabel,
   votePercentage,
 } from "../utils/stellar";
+import { VOTING_CONTRACT_ID } from "../utils/constants";
 
 export default function ProposalDetail() {
   const { id } = useParams<{ id: string }>();
-  const { getProposal, loading } = useProposals();
+  const proposalId = Number(id);
+  const { proposal, loading, error, refetch } = useProposal(proposalId);
   const { wallet, connect } = useWallet();
+  const { balance } = usePollBalance(wallet.publicKey);
+
   const [showVoteModal, setShowVoteModal] = useState(false);
   const [userVote, setUserVote] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [finalizing, setFinalizing] = useState(false);
+  const [finalizeHash, setFinalizeHash] = useState<string | null>(null);
+  const [finalizeError, setFinalizeError] = useState<string | null>(null);
 
-  const proposal = getProposal(Number(id));
+  // Check if user already voted (on mount when wallet connects)
+  const checkExistingVote = async () => {
+    if (!wallet.publicKey) return;
+    const vote = await fetchVote(proposalId, wallet.publicKey);
+    if (vote) setUserVote(vote.tag);
+  };
+
+  // Called when wallet connects
+  useState(() => {
+    if (wallet.connected) checkExistingVote();
+  });
 
   const handleVote = async (choice: "Yes" | "No" | "Abstain") => {
-    // Simulate transaction
-    await new Promise((r) => setTimeout(r, 1500));
+    if (!wallet.publicKey) throw new Error("Wallet not connected");
+    const hash = await castVote(wallet.publicKey, proposalId, choice);
+    setTxHash(hash);
     setUserVote(choice);
     setShowVoteModal(false);
+    // Refresh proposal to show updated vote counts
+    await refetch();
+  };
+
+  const handleFinalize = async () => {
+    if (!wallet.publicKey) return;
+    setFinalizing(true);
+    setFinalizeError(null);
+    try {
+      const hash = await finalizeProposal(wallet.publicKey, proposalId);
+      setFinalizeHash(hash);
+      await refetch();
+    } catch (e: unknown) {
+      setFinalizeError(e instanceof Error ? e.message : "Finalize failed");
+    } finally {
+      setFinalizing(false);
+    }
   };
 
   if (loading) {
     return (
       <div className="page-wrapper">
-        <div className="container" style={{ textAlign: "center", paddingTop: 80 }}>
+        <div
+          className="container"
+          style={{ textAlign: "center", paddingTop: 80 }}
+        >
           <div className="spinner" style={{ margin: "0 auto 16px" }} />
-          <p>Loading proposal...</p>
+          <p>Loading proposal from chain...</p>
         </div>
       </div>
     );
   }
 
-  if (!proposal) {
+  if (error || !proposal) {
     return (
       <div className="page-wrapper">
         <div className="container">
@@ -56,7 +99,7 @@ export default function ProposalDetail() {
             <div className="empty-state-icon">❓</div>
             <div className="empty-state-title">Proposal not found</div>
             <div className="empty-state-desc">
-              This proposal doesn't exist or has been removed.
+              {error || "This proposal doesn't exist on-chain."}
             </div>
             <Link to="/proposals" className="btn btn-primary">
               Back to Proposals
@@ -75,6 +118,15 @@ export default function ProposalDetail() {
   const totalVotes =
     proposal.yes_votes + proposal.no_votes + proposal.abstain_votes;
   const isActive = proposal.status === "Active";
+  const votingEnded =
+    isActive; // show finalize button when active (user can check if period ended)
+
+  let calldataDisplay = proposal.calldata;
+  try {
+    calldataDisplay = JSON.stringify(JSON.parse(proposal.calldata), null, 2);
+  } catch {
+    // not JSON, show raw
+  }
 
   return (
     <div className="page-wrapper">
@@ -97,9 +149,9 @@ export default function ProposalDetail() {
             alignItems: "start",
           }}
         >
-          {/* Main content */}
+          {/* Main */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {/* Header card */}
+            {/* Header */}
             <div className="card" style={{ padding: 28 }}>
               <div
                 style={{
@@ -117,9 +169,18 @@ export default function ProposalDetail() {
                 >
                   Proposal #{proposal.id}
                 </span>
-                <span className={`badge ${statusColor(proposal.status)}`}>
-                  {statusLabel(proposal.status)}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={refetch}
+                    title="Refresh from chain"
+                  >
+                    <RefreshCw size={13} />
+                  </button>
+                  <span className={`badge ${statusColor(proposal.status)}`}>
+                    {statusLabel(proposal.status)}
+                  </span>
+                </div>
               </div>
               <h2 style={{ marginBottom: 16 }}>{proposal.title}</h2>
               <p style={{ lineHeight: 1.7, marginBottom: 20 }}>
@@ -135,21 +196,54 @@ export default function ProposalDetail() {
                   color: "var(--color-text-muted)",
                 }}
               >
-                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                >
                   <User size={14} />
-                  Proposer: {shortenAddress(proposal.proposer)}
+                  {shortenAddress(proposal.proposer)}
                 </span>
-                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                >
                   <Clock size={14} />
-                  Voting ends: Ledger #{proposal.end_ledger}
+                  Ends ledger #{proposal.end_ledger}
                 </span>
+                <a
+                  href={`https://stellar.expert/explorer/testnet/contract/${VOTING_CONTRACT_ID}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    color: "var(--color-accent)",
+                    fontSize: "0.8125rem",
+                  }}
+                >
+                  View contract <ExternalLink size={11} />
+                </a>
               </div>
             </div>
+
+            {/* Tx confirmation */}
+            {txHash && (
+              <div className="alert alert-success">
+                <CheckCircle size={16} />
+                Vote recorded on-chain!{" "}
+                <a
+                  href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit", fontWeight: 700 }}
+                >
+                  View tx ↗
+                </a>
+              </div>
+            )}
 
             {/* Vote results */}
             <div className="card" style={{ padding: 28 }}>
               <h3 style={{ marginBottom: 20 }}>Vote Results</h3>
-
               {totalVotes === 0 ? (
                 <div
                   style={{
@@ -158,12 +252,14 @@ export default function ProposalDetail() {
                     color: "var(--color-text-muted)",
                   }}
                 >
-                  No votes cast yet. Be the first to vote!
+                  No votes cast yet. Be the first!
                 </div>
               ) : (
                 <>
-                  {/* Bar */}
-                  <div className="vote-bar-container" style={{ height: 12, marginBottom: 16 }}>
+                  <div
+                    className="vote-bar-container"
+                    style={{ height: 12, marginBottom: 16 }}
+                  >
                     <div
                       className="vote-bar-yes"
                       style={{ width: `${pct.yes}%` }}
@@ -177,8 +273,6 @@ export default function ProposalDetail() {
                       style={{ width: `${pct.abstain}%` }}
                     />
                   </div>
-
-                  {/* Breakdown */}
                   <div
                     style={{
                       display: "grid",
@@ -231,8 +325,7 @@ export default function ProposalDetail() {
                             fontSize: "0.875rem",
                           }}
                         >
-                          {v.icon}
-                          {v.label}
+                          {v.icon} {v.label}
                         </div>
                         <div
                           style={{
@@ -249,7 +342,6 @@ export default function ProposalDetail() {
                       </div>
                     ))}
                   </div>
-
                   <div
                     style={{
                       marginTop: 16,
@@ -288,7 +380,7 @@ export default function ProposalDetail() {
                   lineHeight: 1.6,
                 }}
               >
-                {JSON.stringify(JSON.parse(proposal.calldata), null, 2)}
+                {calldataDisplay}
               </pre>
             </div>
           </div>
@@ -302,7 +394,7 @@ export default function ProposalDetail() {
               {userVote ? (
                 <div className="alert alert-success">
                   <CheckCircle size={16} />
-                  You voted <strong>{userVote}</strong>
+                  You voted <strong>{userVote}</strong> on-chain
                 </div>
               ) : !isActive ? (
                 <div className="alert alert-info">
@@ -310,7 +402,9 @@ export default function ProposalDetail() {
                   Voting has ended for this proposal.
                 </div>
               ) : !wallet.connected ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                >
                   <p style={{ fontSize: "0.875rem" }}>
                     Connect your Freighter wallet to vote.
                   </p>
@@ -319,19 +413,100 @@ export default function ProposalDetail() {
                   </button>
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <p style={{ fontSize: "0.875rem" }}>
-                    Your vote is weighted by your POLL token balance.
-                  </p>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.8125rem",
+                      color: "var(--color-text-muted)",
+                    }}
+                  >
+                    Voting power:{" "}
+                    <strong style={{ color: "var(--color-accent)" }}>
+                      {formatPoll(balance)} POLL
+                    </strong>
+                  </div>
                   <button
                     className="btn btn-primary"
                     onClick={() => setShowVoteModal(true)}
+                    disabled={balance === 0n}
                   >
                     Vote Now
                   </button>
+                  {balance === 0n && (
+                    <p
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--color-failed)",
+                      }}
+                    >
+                      You need POLL tokens to vote.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Finalize */}
+            {isActive && wallet.connected && (
+              <div className="card" style={{ padding: 24 }}>
+                <h4 style={{ marginBottom: 8 }}>Finalize Proposal</h4>
+                <p
+                  style={{
+                    fontSize: "0.8125rem",
+                    color: "var(--color-text-muted)",
+                    marginBottom: 12,
+                  }}
+                >
+                  After the voting period ends (ledger #{proposal.end_ledger}),
+                  anyone can finalize to trigger on-chain execution.
+                </p>
+                {finalizeHash && (
+                  <div
+                    className="alert alert-success"
+                    style={{ marginBottom: 12 }}
+                  >
+                    <CheckCircle size={14} />
+                    Finalized!{" "}
+                    <a
+                      href={`https://stellar.expert/explorer/testnet/tx/${finalizeHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "inherit", fontWeight: 700 }}
+                    >
+                      View tx ↗
+                    </a>
+                  </div>
+                )}
+                {finalizeError && (
+                  <div
+                    className="alert alert-error"
+                    style={{ marginBottom: 12 }}
+                  >
+                    {finalizeError}
+                  </div>
+                )}
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleFinalize}
+                  disabled={finalizing}
+                  style={{ width: "100%" }}
+                >
+                  {finalizing ? (
+                    <>
+                      <span
+                        className="spinner"
+                        style={{ width: 14, height: 14 }}
+                      />
+                      Finalizing...
+                    </>
+                  ) : (
+                    "Finalize Proposal"
+                  )}
+                </button>
+              </div>
+            )}
 
             {/* Info */}
             <div className="card" style={{ padding: 24 }}>
@@ -346,12 +521,15 @@ export default function ProposalDetail() {
               >
                 {[
                   { label: "Status", value: statusLabel(proposal.status) },
-                  { label: "Proposal ID", value: `#${proposal.id}` },
+                  { label: "ID", value: `#${proposal.id}` },
                   {
                     label: "Proposer",
                     value: shortenAddress(proposal.proposer),
                   },
-                  { label: "Start Ledger", value: `#${proposal.start_ledger}` },
+                  {
+                    label: "Start Ledger",
+                    value: `#${proposal.start_ledger}`,
+                  },
                   { label: "End Ledger", value: `#${proposal.end_ledger}` },
                   {
                     label: "Total Votes",
@@ -375,18 +553,27 @@ export default function ProposalDetail() {
                   </div>
                 ))}
               </div>
+              <div className="divider" />
+              <a
+                href={`https://stellar.expert/explorer/testnet/contract/${VOTING_CONTRACT_ID}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost btn-sm"
+                style={{ width: "100%", justifyContent: "center" }}
+              >
+                View on Stellar Expert <ExternalLink size={12} />
+              </a>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Vote modal */}
       {showVoteModal && (
         <VoteModal
           proposal={proposal}
           onClose={() => setShowVoteModal(false)}
           onVote={handleVote}
-          votingPower={1000_0000000}
+          votingPower={Number(balance)}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Droplets, LayoutDashboard, Users, Trophy, Landmark, Vote, Plus, Info, Home } from "lucide-react";
+import { Menu, X, Droplets, LayoutDashboard, Users, Trophy, Landmark, Vote, Plus, Info, Home, LogOut, Copy, ExternalLink, ChevronDown } from "lucide-react";
 import { useWallet } from "../hooks/useWallet";
 import { shortenAddress } from "../utils/stellar";
 
@@ -16,17 +16,89 @@ const NAV_LINKS = [
   { to: "/about", label: "About", icon: <Info size={16} /> },
 ];
 
+function WalletMenu({ publicKey, onDisconnect }: { publicKey: string; onDisconnect: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const copyAddress = () => {
+    navigator.clipboard.writeText(publicKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="wallet-badge wallet-badge-btn"
+        aria-expanded={open}
+      >
+        <span className="wallet-dot" />
+        {shortenAddress(publicKey)}
+        <ChevronDown size={13} style={{ opacity: 0.6, transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }} />
+      </button>
+
+      {open && (
+        <div className="wallet-dropdown">
+          {/* Address */}
+          <div className="wallet-dropdown-address">
+            <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginBottom: 4, display: "block" }}>Connected wallet</span>
+            <span style={{ fontFamily: "monospace", fontSize: "0.8125rem", wordBreak: "break-all" }}>
+              {publicKey}
+            </span>
+          </div>
+
+          <div className="wallet-dropdown-divider" />
+
+          {/* Actions */}
+          <button className="wallet-dropdown-item" onClick={copyAddress}>
+            <Copy size={14} />
+            {copied ? "Copied!" : "Copy address"}
+          </button>
+
+          <a
+            className="wallet-dropdown-item"
+            href={`https://stellar.expert/explorer/testnet/account/${publicKey}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setOpen(false)}
+          >
+            <ExternalLink size={14} />
+            View on Stellar Expert
+          </a>
+
+          <div className="wallet-dropdown-divider" />
+
+          <button
+            className="wallet-dropdown-item wallet-dropdown-disconnect"
+            onClick={() => { onDisconnect(); setOpen(false); }}
+          >
+            <LogOut size={14} />
+            Disconnect
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Navbar() {
   const location = useLocation();
-  const { wallet, loading, connect } = useWallet();
+  const { wallet, loading, connect, disconnect } = useWallet();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close menu on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
-  // Close menu on outside click
   useEffect(() => {
     if (!mobileOpen) return;
     const handler = (e: MouseEvent) => {
@@ -43,32 +115,23 @@ export default function Navbar() {
   return (
     <nav className="navbar" id="pollchain-nav">
       <div className="container navbar-inner">
-        {/* Logo */}
         <Link to="/" className="navbar-logo">
           <div className="navbar-logo-icon">P</div>
           PollChain
         </Link>
 
-        {/* Desktop links */}
         <div className="navbar-links">
           {NAV_LINKS.map((l) => (
-            <Link key={l.to} to={l.to} className={isActive(l.to)}>
-              {l.label}
-            </Link>
+            <Link key={l.to} to={l.to} className={isActive(l.to)}>{l.label}</Link>
           ))}
         </div>
 
-        {/* Right side */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* Wallet — hidden on very small screens, shown in mobile menu */}
           <div className="wallet-btn-desktop">
             {loading ? (
               <div className="spinner" />
             ) : wallet.connected && wallet.publicKey ? (
-              <div className="wallet-badge">
-                <span className="wallet-dot" />
-                {shortenAddress(wallet.publicKey)}
-              </div>
+              <WalletMenu publicKey={wallet.publicKey} onDisconnect={disconnect} />
             ) : (
               <button className="btn btn-primary btn-sm" onClick={connect}>
                 Connect Wallet
@@ -76,13 +139,7 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Hamburger — only visible on mobile */}
-          <button
-            className="hamburger-btn"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle menu"
-            aria-expanded={mobileOpen}
-          >
+          <button className="hamburger-btn" onClick={() => setMobileOpen((o) => !o)} aria-label="Toggle menu" aria-expanded={mobileOpen}>
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
@@ -90,14 +147,33 @@ export default function Navbar() {
 
       {/* Mobile drawer */}
       <div className={`mobile-drawer ${mobileOpen ? "mobile-drawer-open" : ""}`}>
-        {/* Wallet in mobile */}
         <div className="mobile-wallet">
           {loading ? (
             <div className="spinner" />
           ) : wallet.connected && wallet.publicKey ? (
-            <div className="wallet-badge" style={{ justifyContent: "center" }}>
-              <span className="wallet-dot" />
-              {wallet.publicKey.slice(0, 8)}...{wallet.publicKey.slice(-6)}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "var(--color-accent-lighter)", borderRadius: "var(--radius-md)" }}>
+                <span className="wallet-dot" />
+                <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--color-accent)", flex: 1, fontFamily: "monospace" }}>
+                  {wallet.publicKey.slice(0, 10)}...{wallet.publicKey.slice(-6)}
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  style={{ flex: 1 }}
+                  onClick={() => { navigator.clipboard.writeText(wallet.publicKey!); }}
+                >
+                  <Copy size={13} /> Copy
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  style={{ flex: 1 }}
+                  onClick={() => { disconnect(); setMobileOpen(false); }}
+                >
+                  <LogOut size={13} /> Disconnect
+                </button>
+              </div>
             </div>
           ) : (
             <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => { connect(); setMobileOpen(false); }}>
@@ -108,7 +184,6 @@ export default function Navbar() {
 
         <div className="mobile-divider" />
 
-        {/* Nav links */}
         <div className="mobile-nav-links">
           {NAV_LINKS.map((l) => (
             <Link
@@ -124,10 +199,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Backdrop */}
-      {mobileOpen && (
-        <div className="mobile-backdrop" onClick={() => setMobileOpen(false)} />
-      )}
+      {mobileOpen && <div className="mobile-backdrop" onClick={() => setMobileOpen(false)} />}
     </nav>
   );
 }

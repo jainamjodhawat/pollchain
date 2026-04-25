@@ -127,14 +127,21 @@ All 13 tests pass ✅
 - [x] Mobile-responsive frontend
 - [x] Comprehensive test suite (13 tests)
 
-## Level 5 (Purple Belt) Roadmap
 
-- [ ] Deploy to mainnet
-- [ ] Onboard 20+ active community members
-- [ ] Add delegation (vote on behalf of others)
-- [ ] Treasury contract integration
-- [ ] Security audit via Stellar Audit Bank
-- [ ] Demo Day presentation
+demo video drive link- https://drive.google.com/file/d/15bN3Q3Ho2Wd_1nERBiSsWyTZvWUEAMKx/view?usp=sharing
+screenshots
+<img width="1456" height="864" alt="Screenshot 2026-04-25 at 8 19 06 AM" src="https://github.com/user-attachments/assets/9adb012f-ba95-432e-9e66-b8f250724c91" />
+<img width="1458" height="864" alt="Screenshot 2026-04-25 at 8 19 20 AM" src="https://github.com/user-attachments/assets/04a8f906-75a7-4400-b4c3-c7e644fc9850" />
+<img width="1452" height="864" alt="Screenshot 2026-04-25 at 8 17 58 AM" src="https://github.com/user-attachments/assets/e7492aa1-f349-4442-8176-6d14693bd867" />
+<img width="1453" height="865" alt="Screenshot 2026-04-25 at 8 18 11 AM" src="https://github.com/user-attachments/assets/d16a1d0d-2eb0-4535-85f3-ac81936bc98e" />
+<img width="1455" height="862" alt="Screenshot 2026-04-25 at 8 18 27 AM" src="https://github.com/user-attachments/assets/edcfdb39-6101-4f54-baba-2e81a5328160" />
+<img width="1457" height="863" alt="Screenshot 2026-04-25 at 8 18 52 AM" src="https://github.com/user-attachments/assets/2137c5ef-00f6-473f-a5c1-cce84888a34d" />
+<img width="1451" height="855" alt="Screenshot 2026-04-25 at 8 19 03 AM" src="https://github.com/user-attachments/assets/c989441a-c000-4516-9765-c5e08ba93ec3" />
+mobile viewing experience-
+<img width="356" height="772" alt="Screenshot 2026-04-25 at 8 19 38 AM" src="https://github.com/user-attachments/assets/b149a6dd-07bc-4b4c-af79-38f117a23824" />
+<img width="350" height="767" alt="Screenshot 2026-04-25 at 8 19 49 AM" src="https://github.com/user-attachments/assets/69573962-d87c-4147-9cf4-f5e06fddd3d8" />
+<img width="356" height="774" alt="Screenshot 2026-04-25 at 8 20 02 AM" src="https://github.com/user-attachments/assets/27e4a19d-a9d8-4645-be06-8c5c1b9e8979" />
+
 
 ## License
 

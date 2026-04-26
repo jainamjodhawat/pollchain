@@ -127,6 +127,17 @@ All 13 tests pass ✅
 - [x] Mobile-responsive frontend
 - [x] Comprehensive test suite (13 tests)
 
+## User Feedback & Fixes
+
+Issues reported by users during testing, and the commits in which they were resolved.
+
+| # | User Feedback | Status | Fix Commit |
+|---|---|---|---|
+| 1 | "When I vote I don't see the percentage of vote change instantly" | ✅ Fixed | [`c9b6450`](https://github.com/jainamjodhawat/pollchain/commit/c9b6450) |
+| 2 | "My proposal is not visible — I would like a new tab to view my proposals" | ✅ Fixed | [`31a3f99`](https://github.com/jainamjodhawat/pollchain/commit/31a3f99) |
+| 3 | "Remove all the hardcoded stuff, it creates confusion" | ✅ Fixed | [`562d00c`](https://github.com/jainamjodhawat/pollchain/commit/562d00c) |
+| 4 | "There should be an option to disconnect wallet" | ✅ Fixed | [`87d6cec`](https://github.com/jainamjodhawat/pollchain/commit/87d6cec) |
+
 
 demo video drive link- https://drive.google.com/file/d/15bN3Q3Ho2Wd_1nERBiSsWyTZvWUEAMKx/view?usp=sharing
 screenshots

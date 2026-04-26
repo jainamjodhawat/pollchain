@@ -65,6 +65,13 @@ export default function CreateProposal() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!wallet.connected || !wallet.publicKey) { await connect(); return; }
+
+    // Check balance before submitting
+    if (balance < BigInt(100 * 10 ** 7)) {
+      setError("You need at least 100 POLL tokens to create a proposal. Visit the Faucet to claim free tokens.");
+      return;
+    }
+
     setSubmitting(true); setError(null);
     try {
       const calldata = buildCalldata(template, fields, selectedTags);
@@ -72,7 +79,13 @@ export default function CreateProposal() {
       const hash = await createProposal(wallet.publicKey, title, description, calldata);
       setTxHash(hash);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Transaction failed");
+      const msg = err instanceof Error ? err.message : "Transaction failed";
+      // Make the error human-readable
+      if (msg.includes("insufficient") || msg.includes("proposal_threshold") || msg.includes("UnreachableCodeReached")) {
+        setError("Insufficient POLL balance. You need at least 100 POLL to create a proposal. Visit the Faucet page to claim tokens.");
+      } else {
+        setError(msg);
+      }
     } finally { setSubmitting(false); }
   };
 

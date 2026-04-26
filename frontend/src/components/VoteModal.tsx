@@ -30,8 +30,15 @@ export default function VoteModal({
     try {
       await onVote(selected);
       setSuccess(true);
-    } catch (e: any) {
-      setError(e.message || "Transaction failed");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Transaction failed";
+      if (msg.includes("UnreachableCodeReached") || msg.includes("no voting power") || msg.includes("insufficient")) {
+        setError("You need POLL tokens to vote. Visit the Faucet page to claim free tokens.");
+      } else if (msg.includes("already voted")) {
+        setError("You have already voted on this proposal.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }

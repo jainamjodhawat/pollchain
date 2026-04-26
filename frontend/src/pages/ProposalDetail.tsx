@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -39,27 +39,37 @@ export default function ProposalDetail() {
   const [finalizing, setFinalizing] = useState(false);
   const [finalizeHash, setFinalizeHash] = useState<string | null>(null);
   const [finalizeError, setFinalizeError] = useState<string | null>(null);
+  // Optimistic vote counts — updated instantly on vote, then confirmed by chain
+  const [optimisticVotes, setOptimisticVotes] = useState<{
+    yes: number; no: number; abstain: number;
+  } | null>(null);
 
-  // Check if user already voted (on mount when wallet connects)
-  const checkExistingVote = async () => {
-    if (!wallet.publicKey) return;
-    const vote = await fetchVote(proposalId, wallet.publicKey);
-    if (vote) setUserVote(vote.tag);
-  };
-
-  // Called when wallet connects
-  useState(() => {
-    if (wallet.connected) checkExistingVote();
-  });
+  // Check if user already voted
+  useEffect(() => {
+    if (!wallet.publicKey || !proposal) return;
+    fetchVote(proposalId, wallet.publicKey).then((v) => {
+      if (v) setUserVote(v.tag);
+    });
+  }, [wallet.publicKey, proposalId, proposal]);
 
   const handleVote = async (choice: "Yes" | "No" | "Abstain") => {
     if (!wallet.publicKey) throw new Error("Wallet not connected");
-    const hash = await castVote(wallet.publicKey, proposalId, choice);
-    setTxHash(hash);
+
+    // Optimistically update vote counts immediately
+    const weight = Number(balance);
+    setOptimisticVotes({
+      yes: (proposal!.yes_votes) + (choice === "Yes" ? weight : 0),
+      no: (proposal!.no_votes) + (choice === "No" ? weight : 0),
+      abstain: (proposal!.abstain_votes) + (choice === "Abstain" ? weight : 0),
+    });
     setUserVote(choice);
     setShowVoteModal(false);
-    // Refresh proposal to show updated vote counts
-    await refetch();
+
+    // Submit on-chain
+    const hash = await castVote(wallet.publicKey, proposalId, choice);
+    setTxHash(hash);
+    // Confirm with chain in background (no await — don't block UI)
+    refetch().then(() => setOptimisticVotes(null));
   };
 
   const handleFinalize = async () => {
@@ -110,13 +120,12 @@ export default function ProposalDetail() {
     );
   }
 
-  const pct = votePercentage(
-    proposal.yes_votes,
-    proposal.no_votes,
-    proposal.abstain_votes
-  );
-  const totalVotes =
-    proposal.yes_votes + proposal.no_votes + proposal.abstain_votes;
+  const displayYes = optimisticVotes?.yes ?? proposal.yes_votes;
+  const displayNo = optimisticVotes?.no ?? proposal.no_votes;
+  const displayAbstain = optimisticVotes?.abstain ?? proposal.abstain_votes;
+
+  const pct = votePercentage(displayYes, displayNo, displayAbstain);
+  const totalVotes = displayYes + displayNo + displayAbstain;
   const isActive = proposal.status === "Active";
   const votingEnded =
     isActive; // show finalize button when active (user can check if period ended)
@@ -283,7 +292,7 @@ export default function ProposalDetail() {
                     {[
                       {
                         label: "Yes",
-                        votes: proposal.yes_votes,
+                        votes: displayYes,
                         pct: pct.yes,
                         color: "var(--color-passed)",
                         bg: "#d1fae5",
@@ -291,7 +300,7 @@ export default function ProposalDetail() {
                       },
                       {
                         label: "No",
-                        votes: proposal.no_votes,
+                        votes: displayNo,
                         pct: pct.no,
                         color: "var(--color-failed)",
                         bg: "#fee2e2",
@@ -299,7 +308,7 @@ export default function ProposalDetail() {
                       },
                       {
                         label: "Abstain",
-                        votes: proposal.abstain_votes,
+                        votes: displayAbstain,
                         pct: pct.abstain,
                         color: "var(--color-text-secondary)",
                         bg: "#f3f4f6",

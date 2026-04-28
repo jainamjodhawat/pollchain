@@ -145,28 +145,7 @@ delegation       : 4 tests — delegate, undelegate, voting-power, self-delegate
 
 ---
 
-## Level 4 (Green Belt) Checklist
 
-- [x] Custom SEP-41 POLL governance token
-- [x] Inter-contract call: Voting → Execution on proposal pass
-- [x] CI/CD pipeline (GitHub Actions — contracts + frontend + security audit)
-- [x] Mobile-responsive frontend
-- [x] 26 contract tests across 6 contracts
-
-## Level 5 (Blue Belt) Checklist
-
-- [x] Shipped real MVP deployed on Stellar Testnet
-- [x] Live frontend deployed on Vercel
-- [x] 5+ active users onboarded (claimed POLL, created proposals, voted)
-- [x] Faucet contract — users can self-onboard without admin
-- [x] Treasury contract — community-owned fund
-- [x] Delegation contract — advanced governance feature
-- [x] Dashboard — personal activity view per wallet
-- [x] Demo video recorded and linked
-- [x] User feedback collected and fixed (4 issues resolved with commit references)
-- [x] README with full documentation, screenshots, and contract addresses
-
----
 
 ## User Feedback & Fixes
 

@@ -149,6 +149,9 @@ delegation       : 4 tests — delegate, undelegate, voting-power, self-delegate
 
 ## User Feedback & Fixes
 
+google form link - https://forms.gle/8aS53MmL2ocw1V7bA
+response sheet - https://docs.google.com/spreadsheets/d/1OpMTAgXctv9_4_mjb31TjOVvoZbm_1ernQJ_nc6H4sw/edit?usp=sharing
+
 | # | User Feedback | Status | Fix Commit |
 |---|---|---|---|
 | 1 | "When I vote I don't see the percentage of vote change instantly" | ✅ Fixed | [`c9b6450`](https://github.com/jainamjodhawat/pollchain/commit/c9b6450) |

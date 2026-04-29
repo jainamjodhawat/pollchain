@@ -13,19 +13,15 @@ PollChain is a lightweight governance platform that lets any community create pr
 [▶ Watch Demo on Google Drive](https://drive.google.com/file/d/15bN3Q3Ho2Wd_1nERBiSsWyTZvWUEAMKx/view?usp=sharing)
 
 ## Screenshots
-
-<img width="1456" alt="Home" src="https://github.com/user-attachments/assets/9adb012f-ba95-432e-9e66-b8f250724c91" />
-<img width="1458" alt="Proposals" src="https://github.com/user-attachments/assets/04a8f906-75a7-4400-b4c3-c7e644fc9850" />
-<img width="1452" alt="Proposal Detail" src="https://github.com/user-attachments/assets/e7492aa1-f349-4442-8176-6d14693bd867" />
-<img width="1453" alt="Create Proposal" src="https://github.com/user-attachments/assets/d16a1d0d-2eb0-4535-85f3-ac81936bc98e" />
-<img width="1455" alt="Dashboard" src="https://github.com/user-attachments/assets/edcfdb39-6101-4f54-baba-2e81a5328160" />
-<img width="1457" alt="Faucet" src="https://github.com/user-attachments/assets/2137c5ef-00f6-473f-a5c1-cce84888a34d" />
-<img width="1451" alt="Treasury" src="https://github.com/user-attachments/assets/c989441a-c000-4516-9765-c5e08ba93ec3" />
+<img width="1274" height="872" alt="Screenshot 2026-04-29 at 10 54 08 PM" src="https://github.com/user-attachments/assets/78ffd8bb-ea0e-4da3-83b9-26eef988973c" />
+<img width="1282" height="873" alt="Screenshot 2026-04-29 at 10 53 38 PM" src="https://github.com/user-attachments/assets/26f855d7-42e3-4456-90a6-7a27e6209305" />
+<img width="1281" height="863" alt="Screenshot 2026-04-29 at 10 53 47 PM" src="https://github.com/user-attachments/assets/95d16f66-2a0b-4ee5-a2e3-1c1fd313a0bf" />
+<img width="1273" height="875" alt="Screenshot 2026-04-29 at 10 53 54 PM" src="https://github.com/user-attachments/assets/153137ec-9366-4576-91c6-d3acbbadb2f4" />
 
 **Mobile:**
-<img width="356" alt="Mobile Home" src="https://github.com/user-attachments/assets/b149a6dd-07bc-4b4c-af79-38f117a23824" />
-<img width="350" alt="Mobile Proposals" src="https://github.com/user-attachments/assets/69573962-d87c-4147-9cf4-f5e06fddd3d8" />
-<img width="356" alt="Mobile Menu" src="https://github.com/user-attachments/assets/27e4a19d-a9d8-4645-be06-8c5c1b9e8979" />
+<img width="359" height="769" alt="Screenshot 2026-04-29 at 10 54 35 PM" src="https://github.com/user-attachments/assets/5de72ea2-9c80-4bd0-8bac-afb64f98858b" />
+<img width="356" height="766" alt="Screenshot 2026-04-29 at 10 54 43 PM" src="https://github.com/user-attachments/assets/2417f3ff-b5cc-46bd-9e55-fa7cdc63874f" />
+<img width="348" height="766" alt="Screenshot 2026-04-29 at 10 54 54 PM" src="https://github.com/user-attachments/assets/5cdc3c0b-3d13-4974-b6e8-b822d14e124f" />
 
 ---
 

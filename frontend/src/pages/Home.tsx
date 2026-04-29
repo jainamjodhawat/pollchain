@@ -25,7 +25,7 @@ export default function Home() {
           <h1 className="hero-title">
             Gasless On-Chain
             <br />
-            <span style={{ color: "var(--color-accent)" }}>
+            <span className="hero-title-gradient">
               DAO Governance
             </span>
           </h1>
@@ -126,32 +126,32 @@ export default function Home() {
           >
             {[
               {
-                icon: <Zap size={24} color="var(--color-accent)" />,
+                icon: <Zap size={22} color="var(--color-accent)" />,
                 title: "Near-Zero Fees",
                 desc: "Stellar transactions cost ~$0.0007. Vote on every proposal without worrying about gas.",
               },
               {
-                icon: <Shield size={24} color="var(--color-accent)" />,
+                icon: <Shield size={22} color="var(--color-accent)" />,
                 title: "Trustless Execution",
                 desc: "Passed proposals execute automatically via Soroban smart contracts — no multisig delays.",
               },
               {
-                icon: <Vote size={24} color="var(--color-accent)" />,
+                icon: <Vote size={22} color="var(--color-accent)" />,
                 title: "Token-Weighted Voting",
                 desc: "Your POLL token balance determines your voting power. Transparent and on-chain.",
               },
               {
-                icon: <Globe size={24} color="var(--color-accent)" />,
+                icon: <Globe size={22} color="var(--color-accent)" />,
                 title: "Any Community",
                 desc: "Discord servers, student orgs, startups — any group can deploy their own DAO.",
               },
               {
-                icon: <Users size={24} color="var(--color-accent)" />,
+                icon: <Users size={22} color="var(--color-accent)" />,
                 title: "Quorum Protection",
                 desc: "Proposals require minimum participation to pass, preventing low-turnout manipulation.",
               },
               {
-                icon: <ArrowRight size={24} color="var(--color-accent)" />,
+                icon: <ArrowRight size={22} color="var(--color-accent)" />,
                 title: "Inter-Contract Calls",
                 desc: "Voting contract calls the Execution contract on-chain — true composability.",
               },

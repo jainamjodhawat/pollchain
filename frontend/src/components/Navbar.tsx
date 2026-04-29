@@ -117,8 +117,8 @@ export default function Navbar() {
     <nav className="navbar" id="pollchain-nav">
       <div className="container navbar-inner">
         <Link to="/" className="navbar-logo">
-          <div className="navbar-logo-icon">P</div>
-          PollChain
+          <img src="/logo.svg" alt="PollChain" className="navbar-logo-img" />
+          <span className="navbar-logo-text">PollChain</span>
         </Link>
 
         <div className="navbar-links">

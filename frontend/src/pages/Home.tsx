@@ -126,38 +126,38 @@ export default function Home() {
           >
             {[
               {
-                icon: <Zap size={22} color="var(--color-accent)" />,
+                icon: <Zap size={22} color="var(--color-olive)" />,
                 title: "Near-Zero Fees",
                 desc: "Stellar transactions cost ~$0.0007. Vote on every proposal without worrying about gas.",
               },
               {
-                icon: <Shield size={22} color="var(--color-accent)" />,
+                icon: <Shield size={22} color="var(--color-olive)" />,
                 title: "Trustless Execution",
                 desc: "Passed proposals execute automatically via Soroban smart contracts — no multisig delays.",
               },
               {
-                icon: <Vote size={22} color="var(--color-accent)" />,
+                icon: <Vote size={22} color="var(--color-olive)" />,
                 title: "Token-Weighted Voting",
                 desc: "Your POLL token balance determines your voting power. Transparent and on-chain.",
               },
               {
-                icon: <Globe size={22} color="var(--color-accent)" />,
+                icon: <Globe size={22} color="var(--color-olive)" />,
                 title: "Any Community",
                 desc: "Discord servers, student orgs, startups — any group can deploy their own DAO.",
               },
               {
-                icon: <Users size={22} color="var(--color-accent)" />,
+                icon: <Users size={22} color="var(--color-olive)" />,
                 title: "Quorum Protection",
                 desc: "Proposals require minimum participation to pass, preventing low-turnout manipulation.",
               },
               {
-                icon: <ArrowRight size={22} color="var(--color-accent)" />,
+                icon: <ArrowRight size={22} color="var(--color-olive)" />,
                 title: "Inter-Contract Calls",
                 desc: "Voting contract calls the Execution contract on-chain — true composability.",
               },
             ].map((f, i) => (
-              <div key={i} className="card" style={{ padding: 24 }}>
-                <div style={{ marginBottom: 12 }}>{f.icon}</div>
+              <div key={i} className="feature-card">
+                <div className="feature-icon">{f.icon}</div>
                 <h4 style={{ marginBottom: 8 }}>{f.title}</h4>
                 <p style={{ fontSize: "0.875rem" }}>{f.desc}</p>
               </div>

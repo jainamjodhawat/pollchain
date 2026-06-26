@@ -13,6 +13,8 @@ soroban-sdk = { workspace = true }
 soroban-sdk = { workspace = true, features = ["testutils"] }
 governance-token = { path = "../governance_token", features = ["testutils"] }
 execution = { path = "../execution", features = ["testutils"] }
+delegation = { path = "../delegation", features = ["testutils"] }
+treasury = { path = "../treasury", features = ["testutils"] }
 
 [features]
-testutils = ["soroban-sdk/testutils", "governance-token/testutils", "execution/testutils"]
+testutils = ["soroban-sdk/testutils", "governance-token/testutils", "execution/testutils", "delegation/testutils", "treasury/testutils"]

@@ -29,6 +29,10 @@ pub struct Config {
     pub admin: Address,
     pub token: Address,
     pub execution_contract: Address,
+    pub delegation_contract: Address,
+    pub treasury_contract: Address,
+    pub reward_amount: i128,
+    pub quadratic_voting: bool,
     /// Minimum POLL tokens required to create a proposal
     pub proposal_threshold: i128,
     /// Voting period in ledgers (~5 seconds each; 17280 ≈ 1 day)
@@ -95,6 +99,47 @@ mod execution_interface {
 
 use execution_interface::ExecutionClient;
 
+// ── Delegation contract interface ────────────────────────────────────────────
+
+mod delegation_interface {
+    use soroban_sdk::{contractclient, Address, Env};
+
+    #[contractclient(name = "DelegationClient")]
+    pub trait DelegationInterface {
+        fn get_voting_power(env: Env, address: Address) -> i128;
+    }
+}
+
+use delegation_interface::DelegationClient;
+
+// ── Treasury contract interface ──────────────────────────────────────────────
+
+mod treasury_interface {
+    use soroban_sdk::{contractclient, Address, Env};
+
+    #[contractclient(name = "TreasuryClient")]
+    pub trait TreasuryInterface {
+        fn withdraw(env: Env, caller: Address, to: Address, amount: i128);
+    }
+}
+
+use treasury_interface::TreasuryClient;
+
+// ── Integer square root helper for Quadratic Voting ─────────────────────────
+
+fn isqrt(n: i128) -> i128 {
+    if n <= 0 {
+        return 0;
+    }
+    let mut x = n;
+    let mut y = (x + 1) / 2;
+    while y < x {
+        x = y;
+        y = (x + n / x) / 2;
+    }
+    x
+}
+
 // ── Contract ─────────────────────────────────────────────────────────────────
 
 #[contract]
@@ -110,6 +155,10 @@ impl VotingContract {
         admin: Address,
         token: Address,
         execution_contract: Address,
+        delegation_contract: Address,
+        treasury_contract: Address,
+        reward_amount: i128,
+        quadratic_voting: bool,
         proposal_threshold: i128,
         voting_period: u32,
         quorum: i128,
@@ -121,6 +170,10 @@ impl VotingContract {
             admin,
             token,
             execution_contract,
+            delegation_contract,
+            treasury_contract,
+            reward_amount,
+            quadratic_voting,
             proposal_threshold,
             voting_period,
             quorum,
@@ -134,12 +187,20 @@ impl VotingContract {
     /// Update config. Admin only.
     pub fn update_config(
         env: Env,
+        delegation_contract: Address,
+        treasury_contract: Address,
+        reward_amount: i128,
+        quadratic_voting: bool,
         proposal_threshold: i128,
         voting_period: u32,
         quorum: i128,
     ) {
         let mut config: Config = env.storage().instance().get(&DataKey::Config).unwrap();
         config.admin.require_auth();
+        config.delegation_contract = delegation_contract;
+        config.treasury_contract = treasury_contract;
+        config.reward_amount = reward_amount;
+        config.quadratic_voting = quadratic_voting;
         config.proposal_threshold = proposal_threshold;
         config.voting_period = voting_period;
         config.quorum = quorum;
@@ -227,9 +288,14 @@ impl VotingContract {
         );
 
         let config: Config = env.storage().instance().get(&DataKey::Config).unwrap();
-        let token = TokenClient::new(&env, &config.token);
-        let weight = token.balance(&voter);
+        let delegation_client = DelegationClient::new(&env, &config.delegation_contract);
+        let mut weight = delegation_client.get_voting_power(&voter);
         assert!(weight > 0, "no voting power");
+
+        if config.quadratic_voting {
+            weight = isqrt(weight);
+            assert!(weight > 0, "no quadratic voting power");
+        }
 
         match choice {
             VoteChoice::Yes => proposal.yes_votes += weight,
@@ -247,6 +313,12 @@ impl VotingContract {
         env.storage()
             .persistent()
             .set(&DataKey::Proposal(proposal_id), &proposal);
+
+        if config.reward_amount > 0 {
+            let treasury_client = TreasuryClient::new(&env, &config.treasury_contract);
+            let self_address = env.current_contract_address();
+            treasury_client.withdraw(&self_address, &voter, &config.reward_amount);
+        }
 
         env.events()
             .publish((symbol_short!("VOTE"),), (proposal_id, voter, choice, weight));
@@ -398,24 +470,33 @@ mod test {
     use super::*;
     use governance_token::{GovernanceToken, GovernanceTokenClient};
     use execution::{ExecutionContract, ExecutionContractClient};
+    use delegation::{DelegationContract, DelegationContractClient};
+    use treasury::{TreasuryContract, TreasuryContractClient};
     use soroban_sdk::{testutils::{Address as _, Ledger as _}, Env};
 
     fn setup(env: &Env) -> (
         Address,
         Address,
         Address,
+        Address,
+        Address,
         GovernanceTokenClient,
         VotingContractClient,
         ExecutionContractClient,
+        DelegationContractClient,
     ) {
         let admin = Address::generate(env);
         let token_id = env.register(GovernanceToken, ());
         let exec_id = env.register(ExecutionContract, ());
+        let del_id = env.register(DelegationContract, ());
+        let treasury_id = env.register(TreasuryContract, ());
         let voting_id = env.register(VotingContract, ());
 
         let token = GovernanceTokenClient::new(env, &token_id);
         let voting = VotingContractClient::new(env, &voting_id);
         let exec = ExecutionContractClient::new(env, &exec_id);
+        let del = DelegationContractClient::new(env, &del_id);
+        let treasury = TreasuryContractClient::new(env, &treasury_id);
 
         token.initialize(
             &admin,
@@ -425,25 +506,35 @@ mod test {
             &0,
         );
 
-        exec.initialize(&admin, &voting_id);
+        treasury.initialize(&admin, &token_id, &voting_id, &exec_id);
+        exec.initialize(&admin, &voting_id, &treasury_id, &token_id);
+        del.initialize(&admin, &token_id);
+
+        // Mint and deposit to fund the treasury so that executions and rewards can succeed
+        token.mint(&admin, &100_000_0000000);
+        treasury.deposit(&admin, &50_000_0000000);
 
         voting.initialize(
             &admin,
             &token_id,
             &exec_id,
+            &del_id,
+            &treasury_id,
+            &5_0000000,    // 5 POLL reward per vote
+            &false,        // quadratic_voting: false
             &100_0000000,  // 100 POLL threshold
             &100,          // 100 ledgers voting period
             &10_0000000,   // 10 POLL quorum
         );
 
-        (admin, token_id, voting_id, token, voting, exec)
+        (admin, token_id, voting_id, del_id, treasury_id, token, voting, exec, del)
     }
 
     #[test]
     fn test_create_proposal() {
         let env = Env::default();
         env.mock_all_auths();
-        let (admin, _token_id, _voting_id, token, voting, _exec) = setup(&env);
+        let (admin, _token_id, _voting_id, _del_id, _treasury_id, token, voting, _exec, _del) = setup(&env);
 
         token.mint(&admin, &1000_0000000);
         let id = voting.create_proposal(
@@ -460,7 +551,7 @@ mod test {
     fn test_vote_and_finalize_pass() {
         let env = Env::default();
         env.mock_all_auths();
-        let (admin, _token_id, _voting_id, token, voting, _exec) = setup(&env);
+        let (admin, _token_id, _voting_id, _del_id, _treasury_id, token, voting, _exec, _del) = setup(&env);
 
         let voter1 = Address::generate(&env);
         let voter2 = Address::generate(&env);
@@ -493,7 +584,7 @@ mod test {
     fn test_vote_and_finalize_fail() {
         let env = Env::default();
         env.mock_all_auths();
-        let (admin, _token_id, _voting_id, token, voting, _exec) = setup(&env);
+        let (admin, _token_id, _voting_id, _del_id, _treasury_id, token, voting, _exec, _del) = setup(&env);
 
         let voter1 = Address::generate(&env);
         token.mint(&admin, &1000_0000000);
@@ -520,7 +611,7 @@ mod test {
     fn test_double_vote_panics() {
         let env = Env::default();
         env.mock_all_auths();
-        let (admin, _token_id, _voting_id, token, voting, _exec) = setup(&env);
+        let (admin, _token_id, _voting_id, _del_id, _treasury_id, token, voting, _exec, _del) = setup(&env);
 
         token.mint(&admin, &1000_0000000);
         let id = voting.create_proposal(
@@ -537,7 +628,7 @@ mod test {
     fn test_cancel_proposal() {
         let env = Env::default();
         env.mock_all_auths();
-        let (admin, _token_id, _voting_id, token, voting, _exec) = setup(&env);
+        let (admin, _token_id, _voting_id, _del_id, _treasury_id, token, voting, _exec, _del) = setup(&env);
 
         token.mint(&admin, &1000_0000000);
         let id = voting.create_proposal(
@@ -555,7 +646,7 @@ mod test {
     fn test_quorum_not_met() {
         let env = Env::default();
         env.mock_all_auths();
-        let (admin, _token_id, _voting_id, token, voting, _exec) = setup(&env);
+        let (admin, _token_id, _voting_id, _del_id, _treasury_id, token, voting, _exec, _del) = setup(&env);
 
         // Give admin just enough to propose but not enough for quorum
         token.mint(&admin, &100_0000000);
@@ -577,4 +668,91 @@ mod test {
         let proposal = voting.get_proposal(&id);
         assert_eq!(proposal.status, ProposalStatus::Failed);
     }
+
+    #[test]
+    fn test_vote_with_delegated_power() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (admin, _token_id, _voting_id, _del_id, _treasury_id, token, voting, _exec, del) = setup(&env);
+
+        let delegatee = Address::generate(&env);
+        let delegator = Address::generate(&env);
+
+        // Mint tokens
+        token.mint(&admin, &1000_0000000);
+        token.mint(&delegatee, &300_0000000);
+        token.mint(&delegator, &500_0000000);
+
+        // Delegate from delegator to delegatee
+        del.delegate(&delegator, &delegatee);
+
+        let id = voting.create_proposal(
+            &admin,
+            &String::from_str(&env, "Delegated Vote Proposal"),
+            &String::from_str(&env, "desc"),
+            &String::from_str(&env, "{}"),
+        );
+
+        // Delegatee votes
+        voting.vote(&delegatee, &id, &VoteChoice::Yes);
+
+        let proposal = voting.get_proposal(&id);
+        // Total weight should be delegatee's 300 + delegator's 500 = 800
+        assert_eq!(proposal.yes_votes, 800_0000000);
+    }
+
+    #[test]
+    fn test_vote_awards_rewards() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (admin, _token_id, _voting_id, _del_id, _treasury_id, token, voting, _exec, _del) = setup(&env);
+
+        let voter1 = Address::generate(&env);
+        token.mint(&voter1, &100_0000000);
+
+        let id = voting.create_proposal(
+            &admin,
+            &String::from_str(&env, "Rewards Proposal"),
+            &String::from_str(&env, "desc"),
+            &String::from_str(&env, "{}"),
+        );
+
+        let balance_before = token.balance(&voter1);
+        voting.vote(&voter1, &id, &VoteChoice::Yes);
+        let balance_after = token.balance(&voter1);
+
+        // Balance after should be balance before + 5 POLL reward
+        assert_eq!(balance_after, balance_before + 5_0000000);
+    }
+
+    #[test]
+    fn test_quadratic_voting_calculation() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (admin, token_id, voting_id, del_id, treasury_id, token, voting, exec, del) = setup(&env);
+
+        // Enable Quadratic Voting via update_config
+        voting.update_config(&del_id, &treasury_id, &5_0000000, &true, &100_0000000, &100, &10_0000000);
+
+        let voter = Address::generate(&env);
+        
+        // Mint 10,000 POLL tokens (10000 * 10^7 = 100_000_0000000)
+        token.mint(&admin, &100_000_0000000);
+        token.mint(&voter, &100_000_0000000);
+
+        let id = voting.create_proposal(
+            &admin,
+            &String::from_str(&env, "QV Proposal"),
+            &String::from_str(&env, "desc"),
+            &String::from_str(&env, "{}"),
+        );
+
+        voting.vote(&voter, &id, &VoteChoice::Yes);
+
+        let proposal = voting.get_proposal(&id);
+        // sqrt(100_000_0000000) = sqrt(1,000,000,000,000) = 1,000,000
+        // 1,000,000 is 0.1 POLL in 7 decimals
+        assert_eq!(proposal.yes_votes, 1_000_000);
+    }
 }
+

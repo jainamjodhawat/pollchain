@@ -12,6 +12,19 @@ PollChain is a lightweight governance platform that lets any community create pr
 
 [▶ Watch Demo on Google Drive](https://drive.google.com/file/d/15bN3Q3Ho2Wd_1nERBiSsWyTZvWUEAMKx/view?usp=sharing)
 
+---
+
+> [!NOTE]
+> ### 🌟 Journey to Mastery — Level 4 & 5 Newly Added Features
+> 
+> *   **🔗 Treasury-Execution Inter-Contract Integration**: Passing proposals automatically trigger execution, calling the Treasury on-chain to handle secure payouts to designated recipients.
+> *   **🗳️ Quadratic Voting (QV)**: Implemented an on-chain Babylonian square root (`weight = isqrt(weight)`) algorithm to reduce voting centralization and whale dominance.
+> *   **🎁 Voter Participation Rewards**: Added an automated reward distribution model that pays out POLL tokens from the Treasury to active governance participants.
+> *   **📊 Interactive Cash Flow Analytics**: Built high-fidelity SVG Area and Bar Charts tracking cumulative balance trajectories and deposit/withdrawal distributions with hover card details.
+> *   **🌳 Delegation Tree Network Visualizer**: Created a radial SVG node-link graph mapping delegator backing and active representative structures with directional power flow.
+
+---
+
 ## Screenshots
 <img width="1274" height="872" alt="Screenshot 2026-04-29 at 10 54 08 PM" src="https://github.com/user-attachments/assets/78ffd8bb-ea0e-4da3-83b9-26eef988973c" />
 <img width="1282" height="873" alt="Screenshot 2026-04-29 at 10 53 38 PM" src="https://github.com/user-attachments/assets/26f855d7-42e3-4456-90a6-7a27e6209305" />

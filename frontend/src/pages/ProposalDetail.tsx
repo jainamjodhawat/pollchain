@@ -11,11 +11,19 @@ import {
   AlertCircle,
   ExternalLink,
   RefreshCw,
+  Sparkles,
+  Gift,
 } from "lucide-react";
 import { useProposal } from "../hooks/useProposals";
 import { useWallet } from "../hooks/useWallet";
-import { usePollBalance } from "../hooks/usePollBalance";
-import { castVote, fetchVote, finalizeProposal } from "../utils/contracts";
+import {
+  castVote,
+  fetchVote,
+  finalizeProposal,
+  fetchVotingConfig,
+  fetchVotingPower,
+} from "../utils/contracts";
+import type { VotingConfig } from "../utils/contracts";
 import VoteModal from "../components/VoteModal";
 import {
   formatPoll,
@@ -31,7 +39,6 @@ export default function ProposalDetail() {
   const proposalId = Number(id);
   const { proposal, loading, error, refetch } = useProposal(proposalId);
   const { wallet, connect } = useWallet();
-  const { balance } = usePollBalance(wallet.publicKey);
 
   const [showVoteModal, setShowVoteModal] = useState(false);
   const [userVote, setUserVote] = useState<string | null>(null);
@@ -39,10 +46,28 @@ export default function ProposalDetail() {
   const [finalizing, setFinalizing] = useState(false);
   const [finalizeHash, setFinalizeHash] = useState<string | null>(null);
   const [finalizeError, setFinalizeError] = useState<string | null>(null);
+  
+  // Voting settings from contract config
+  const [votingConfig, setVotingConfig] = useState<VotingConfig | null>(null);
+  const [votingPower, setVotingPower] = useState<bigint>(0n);
+
   // Optimistic vote counts — updated instantly on vote, then confirmed by chain
   const [optimisticVotes, setOptimisticVotes] = useState<{
-    yes: number; no: number; abstain: number;
+    yes: number;
+    no: number;
+    abstain: number;
   } | null>(null);
+
+  // Load global voting contract configurations
+  useEffect(() => {
+    fetchVotingConfig().then(setVotingConfig).catch(console.error);
+  }, []);
+
+  // Fetch voting power for the connected wallet
+  useEffect(() => {
+    if (!wallet.publicKey) return;
+    fetchVotingPower(wallet.publicKey).then(setVotingPower).catch(() => {});
+  }, [wallet.publicKey]);
 
   // Check if user already voted
   useEffect(() => {
@@ -52,11 +77,28 @@ export default function ProposalDetail() {
     });
   }, [wallet.publicKey, proposalId, proposal]);
 
+  // Calculate quadratic voting weights (Babylonian isqrt)
+  const calculateQVWeight = (rawPower: bigint) => {
+    if (rawPower <= 0n) return 0n;
+    let x0 = rawPower / 2n;
+    if (x0 === 0n) x0 = 1n;
+    let x1 = (x0 + rawPower / x0) / 2n;
+    while (x1 < x0) {
+      x0 = x1;
+      x1 = (x0 + rawPower / x0) / 2n;
+    }
+    return x0;
+  };
+
+  const isQVActive = !!votingConfig?.quadratic_voting;
+  const effectiveWeight = isQVActive ? calculateQVWeight(votingPower) : votingPower;
+  const rewardAmount = votingConfig?.reward_amount ?? 0n;
+
   const handleVote = async (choice: "Yes" | "No" | "Abstain") => {
     if (!wallet.publicKey) throw new Error("Wallet not connected");
 
-    // Optimistically update vote counts immediately
-    const weight = Number(balance);
+    // Optimistically update vote counts immediately using effective weight
+    const weight = Number(effectiveWeight);
     setOptimisticVotes({
       yes: (proposal!.yes_votes) + (choice === "Yes" ? weight : 0),
       no: (proposal!.no_votes) + (choice === "No" ? weight : 0),
@@ -65,11 +107,14 @@ export default function ProposalDetail() {
     setUserVote(choice);
     setShowVoteModal(false);
 
-    // Submit on-chain
-    const hash = await castVote(wallet.publicKey, proposalId, choice);
-    setTxHash(hash);
-    // Confirm with chain in background (no await — don't block UI)
-    refetch().then(() => setOptimisticVotes(null));
+    try {
+      const hash = await castVote(wallet.publicKey, proposalId, choice);
+      setTxHash(hash);
+      refetch().then(() => setOptimisticVotes(null));
+    } catch (e) {
+      setOptimisticVotes(null);
+      throw e;
+    }
   };
 
   const handleFinalize = async () => {
@@ -90,12 +135,9 @@ export default function ProposalDetail() {
   if (loading) {
     return (
       <div className="page-wrapper">
-        <div
-          className="container"
-          style={{ textAlign: "center", paddingTop: 80 }}
-        >
+        <div className="container" style={{ textAlign: "center", paddingTop: 80 }}>
           <div className="spinner" style={{ margin: "0 auto 16px" }} />
-          <p>Loading proposal from chain...</p>
+          <p>Loading proposal details from chain...</p>
         </div>
       </div>
     );
@@ -127,8 +169,6 @@ export default function ProposalDetail() {
   const pct = votePercentage(displayYes, displayNo, displayAbstain);
   const totalVotes = displayYes + displayNo + displayAbstain;
   const isActive = proposal.status === "Active";
-  const votingEnded =
-    isActive; // show finalize button when active (user can check if period ended)
 
   let calldataDisplay = proposal.calldata;
   try {
@@ -158,10 +198,11 @@ export default function ProposalDetail() {
             alignItems: "start",
           }}
         >
-          {/* Main */}
+          {/* Main Content */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {/* Header */}
-            <div className="card" style={{ padding: 28 }}>
+            
+            {/* Proposal Details Card */}
+            <div className="card" style={{ padding: 28, background: "white" }}>
               <div
                 style={{
                   display: "flex",
@@ -195,7 +236,22 @@ export default function ProposalDetail() {
               <p style={{ lineHeight: 1.7, marginBottom: 20 }}>
                 {proposal.description}
               </p>
-              <div className="divider" />
+              
+              {/* Configuration parameters badges */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+                {isQVActive && (
+                  <span className="badge status-active" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <Sparkles size={12} /> Quadratic Voting
+                  </span>
+                )}
+                {rewardAmount > 0n && (
+                  <span className="badge status-passed" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <Gift size={12} /> Reward: {formatPoll(rewardAmount)} POLL
+                  </span>
+                )}
+              </div>
+
+              <div className="divider" style={{ margin: "20px 0" }} />
               <div
                 style={{
                   display: "flex",
@@ -205,15 +261,11 @@ export default function ProposalDetail() {
                   color: "var(--color-text-muted)",
                 }}
               >
-                <span
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
-                >
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <User size={14} />
                   {shortenAddress(proposal.proposer)}
                 </span>
-                <span
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
-                >
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <Clock size={14} />
                   Ends ledger #{proposal.end_ledger}
                 </span>
@@ -238,7 +290,7 @@ export default function ProposalDetail() {
             {txHash && (
               <div className="alert alert-success">
                 <CheckCircle size={16} />
-                Vote recorded on-chain!{" "}
+                Vote submitted and confirmed on-chain!{" "}
                 <a
                   href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
                   target="_blank"
@@ -251,7 +303,7 @@ export default function ProposalDetail() {
             )}
 
             {/* Vote results */}
-            <div className="card" style={{ padding: 28 }}>
+            <div className="card" style={{ padding: 28, background: "white" }}>
               <h3 style={{ marginBottom: 20 }}>Vote Results</h3>
               {totalVotes === 0 ? (
                 <div
@@ -261,7 +313,7 @@ export default function ProposalDetail() {
                     color: "var(--color-text-muted)",
                   }}
                 >
-                  No votes cast yet. Be the first!
+                  No votes cast yet. Be the first to vote!
                 </div>
               ) : (
                 <>
@@ -346,7 +398,7 @@ export default function ProposalDetail() {
                           {v.pct}%
                         </div>
                         <div style={{ fontSize: "0.75rem", opacity: 0.8 }}>
-                          {formatPoll(v.votes)} POLL
+                          {formatPoll(v.votes)} votes
                         </div>
                       </div>
                     ))}
@@ -359,31 +411,33 @@ export default function ProposalDetail() {
                       textAlign: "center",
                     }}
                   >
-                    Total: {formatPoll(totalVotes)} POLL voted
+                    Total: {formatPoll(totalVotes)} weight voted
                   </div>
                 </>
               )}
             </div>
 
             {/* Calldata */}
-            <div className="card" style={{ padding: 28 }}>
+            <div className="card" style={{ padding: 28, background: "white" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <Code size={18} color="var(--color-accent)" />
-                  <h3>Execution Calldata</h3>
+                  <h3 style={{ margin: 0 }}>Execution Calldata</h3>
                 </div>
                 <button
                   className="btn btn-ghost btn-sm"
                   onClick={() => {
                     const rows = [
-                      ["proposal_id", "title", "status", "yes_votes_poll", "no_votes_poll", "abstain_votes_poll", "total_votes_poll", "start_ledger", "end_ledger", "proposer"],
-                      [proposal.id, `"${proposal.title}"`, proposal.status, formatPoll(proposal.yes_votes), formatPoll(proposal.no_votes), formatPoll(proposal.abstain_votes), formatPoll(proposal.yes_votes + proposal.no_votes + proposal.abstain_votes), proposal.start_ledger, proposal.end_ledger, proposal.proposer],
+                      ["proposal_id", "title", "status", "yes_votes", "no_votes", "abstain_votes", "start_ledger", "end_ledger", "proposer"],
+                      [proposal.id, `"${proposal.title}"`, proposal.status, formatPoll(proposal.yes_votes), formatPoll(proposal.no_votes), formatPoll(proposal.abstain_votes), proposal.start_ledger, proposal.end_ledger, proposal.proposer],
                     ];
                     const csv = rows.map((r) => r.join(",")).join("\n");
                     const blob = new Blob([csv], { type: "text/csv" });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
-                    a.href = url; a.download = `proposal-${proposal.id}.csv`; a.click();
+                    a.href = url;
+                    a.download = `proposal-${proposal.id}.csv`;
+                    a.click();
                     URL.revokeObjectURL(url);
                   }}
                 >
@@ -408,8 +462,8 @@ export default function ProposalDetail() {
 
           {/* Sidebar */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {/* Vote action */}
-            <div className="card" style={{ padding: 24 }}>
+            {/* Vote Action Card */}
+            <div className="card" style={{ padding: 24, background: "white" }}>
               <h4 style={{ marginBottom: 16 }}>Cast Your Vote</h4>
 
               {userVote ? (
@@ -420,58 +474,66 @@ export default function ProposalDetail() {
               ) : !isActive ? (
                 <div className="alert alert-info">
                   <AlertCircle size={16} />
-                  Voting has ended for this proposal.
+                  Voting period has ended.
                 </div>
               ) : !wallet.connected ? (
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
-                >
-                  <p style={{ fontSize: "0.875rem" }}>
-                    Connect your Freighter wallet to vote.
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <p style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)", margin: 0 }}>
+                    Connect Freighter wallet to vote.
                   </p>
                   <button className="btn btn-primary" onClick={connect}>
                     Connect Wallet
                   </button>
                 </div>
               ) : (
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
-                >
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  
+                  {/* Voting Power info */}
                   <div
                     style={{
                       fontSize: "0.8125rem",
-                      color: "var(--color-text-muted)",
+                      color: "var(--color-text-secondary)",
+                      background: "var(--color-cream-dark)",
+                      padding: 12,
+                      borderRadius: "var(--radius-md)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4
                     }}
                   >
-                    Voting power:{" "}
-                    <strong style={{ color: "var(--color-accent)" }}>
-                      {formatPoll(balance)} POLL
-                    </strong>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Base Voting Power:</span>
+                      <strong>{formatPoll(votingPower)} POLL</strong>
+                    </div>
+                    {isQVActive && (
+                      <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px dashed rgba(92,107,46,0.15)", paddingTop: 4, marginTop: 2 }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                          <Sparkles size={11} color="var(--color-accent)" /> Effective weight:
+                        </span>
+                        <strong>{formatPoll(effectiveWeight)} votes</strong>
+                      </div>
+                    )}
                   </div>
+
                   <button
                     className="btn btn-primary"
                     onClick={() => setShowVoteModal(true)}
-                    disabled={balance === 0n}
+                    disabled={votingPower === 0n}
                   >
                     Vote Now
                   </button>
-                  {balance === 0n && (
-                    <p
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--color-failed)",
-                      }}
-                    >
-                      You need POLL tokens to vote.
+                  {votingPower === 0n && (
+                    <p style={{ fontSize: "0.75rem", color: "var(--color-failed)", margin: 0 }}>
+                      You need POLL tokens or delegated backing to vote.
                     </p>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Finalize */}
+            {/* Finalize Card */}
             {isActive && wallet.connected && (
-              <div className="card" style={{ padding: 24 }}>
+              <div className="card" style={{ padding: 24, background: "white" }}>
                 <h4 style={{ marginBottom: 8 }}>Finalize Proposal</h4>
                 <p
                   style={{
@@ -480,14 +542,10 @@ export default function ProposalDetail() {
                     marginBottom: 12,
                   }}
                 >
-                  After the voting period ends (ledger #{proposal.end_ledger}),
-                  anyone can finalize to trigger on-chain execution.
+                  After the voting period ends (ledger #{proposal.end_ledger}), anyone can finalize this proposal to execute payments from the Treasury.
                 </p>
                 {finalizeHash && (
-                  <div
-                    className="alert alert-success"
-                    style={{ marginBottom: 12 }}
-                  >
+                  <div className="alert alert-success" style={{ marginBottom: 12 }}>
                     <CheckCircle size={14} />
                     Finalized!{" "}
                     <a
@@ -501,10 +559,7 @@ export default function ProposalDetail() {
                   </div>
                 )}
                 {finalizeError && (
-                  <div
-                    className="alert alert-error"
-                    style={{ marginBottom: 12 }}
-                  >
+                  <div className="alert alert-error" style={{ marginBottom: 12 }}>
                     {finalizeError}
                   </div>
                 )}
@@ -516,10 +571,7 @@ export default function ProposalDetail() {
                 >
                   {finalizing ? (
                     <>
-                      <span
-                        className="spinner"
-                        style={{ width: 14, height: 14 }}
-                      />
+                      <span className="spinner" style={{ width: 14, height: 14 }} />
                       Finalizing...
                     </>
                   ) : (
@@ -529,8 +581,8 @@ export default function ProposalDetail() {
               </div>
             )}
 
-            {/* Info */}
-            <div className="card" style={{ padding: 24 }}>
+            {/* Proposal Info Card */}
+            <div className="card" style={{ padding: 24, background: "white" }}>
               <h4 style={{ marginBottom: 16 }}>Proposal Info</h4>
               <div
                 style={{
@@ -553,8 +605,8 @@ export default function ProposalDetail() {
                   },
                   { label: "End Ledger", value: `#${proposal.end_ledger}` },
                   {
-                    label: "Total Votes",
-                    value: `${formatPoll(totalVotes)} POLL`,
+                    label: "Total Votes Voted",
+                    value: `${formatPoll(totalVotes)} weight`,
                   },
                 ].map((item) => (
                   <div
@@ -574,13 +626,13 @@ export default function ProposalDetail() {
                   </div>
                 ))}
               </div>
-              <div className="divider" />
+              <div className="divider" style={{ margin: "16px 0" }} />
               <a
                 href={`https://stellar.expert/explorer/testnet/contract/${VOTING_CONTRACT_ID}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-ghost btn-sm"
-                style={{ width: "100%", justifyContent: "center" }}
+                style={{ width: "100%", justifyContent: "center", background: "transparent" }}
               >
                 View on Stellar Expert <ExternalLink size={12} />
               </a>
@@ -594,7 +646,10 @@ export default function ProposalDetail() {
           proposal={proposal}
           onClose={() => setShowVoteModal(false)}
           onVote={handleVote}
-          votingPower={Number(balance)}
+          votingPower={votingPower}
+          effectiveWeight={effectiveWeight}
+          quadraticVotingActive={isQVActive}
+          rewardAmount={rewardAmount}
         />
       )}
     </div>

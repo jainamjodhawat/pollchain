@@ -349,3 +349,37 @@ export async function undelegateVotes(publicKey: string): Promise<string> {
     addressVal(publicKey),
   ]);
 }
+
+// ── Added config and delegator fetchers for Governance Analytics UI ───────────
+
+export interface VotingConfig {
+  admin: string;
+  token: string;
+  execution_contract: string;
+  delegation_contract: string;
+  treasury_contract: string;
+  reward_amount: bigint;
+  quadratic_voting: boolean;
+  proposal_threshold: bigint;
+  voting_period: number;
+  quorum: bigint;
+}
+
+export async function fetchVotingConfig(): Promise<VotingConfig | null> {
+  try {
+    const result = await simulateRead(VOTING_CONTRACT_ID, "get_config");
+    return result as VotingConfig;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchDelegators(address: string): Promise<string[]> {
+  try {
+    const r = await simulateRead(DELEGATION_CONTRACT_ID, "get_delegators", [addressVal(address)]);
+    return (r as string[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+

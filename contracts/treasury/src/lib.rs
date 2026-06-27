@@ -21,6 +21,7 @@ pub struct TreasuryConfig {
     pub admin: Address,
     pub token: Address,
     pub voting_contract: Address,
+    pub execution_contract: Address,
     pub total_deposited: i128,
     pub total_withdrawn: i128,
 }
@@ -52,6 +53,7 @@ impl TreasuryContract {
         admin: Address,
         token: Address,
         voting_contract: Address,
+        execution_contract: Address,
     ) {
         if env.storage().instance().has(&DataKey::Config) {
             panic!("already initialized");
@@ -60,6 +62,7 @@ impl TreasuryContract {
             admin,
             token,
             voting_contract,
+            execution_contract,
             total_deposited: 0,
             total_withdrawn: 0,
         };
@@ -100,14 +103,14 @@ impl TreasuryContract {
             .publish((symbol_short!("DEPOSIT"),), (from, amount));
     }
 
-    /// Withdraw from treasury. Only admin or voting contract.
+    /// Withdraw from treasury. Only admin, voting contract, or execution contract.
     pub fn withdraw(env: Env, caller: Address, to: Address, amount: i128) {
         caller.require_auth();
         assert!(amount > 0, "amount must be positive");
         let mut config: TreasuryConfig =
             env.storage().instance().get(&DataKey::Config).unwrap();
         assert!(
-            caller == config.admin || caller == config.voting_contract,
+            caller == config.admin || caller == config.voting_contract || caller == config.execution_contract,
             "unauthorized"
         );
 
@@ -166,6 +169,7 @@ mod test {
     fn setup(env: &Env) -> (Address, GovernanceTokenClient, TreasuryContractClient) {
         let admin = Address::generate(env);
         let voting = Address::generate(env);
+        let execution = Address::generate(env);
         let token_id = env.register(GovernanceToken, ());
         let treasury_id = env.register(TreasuryContract, ());
 
@@ -179,7 +183,7 @@ mod test {
             &7,
             &1_000_000_0000000,
         );
-        treasury.initialize(&admin, &token_id, &voting);
+        treasury.initialize(&admin, &token_id, &voting, &execution);
         (admin, token, treasury)
     }
 

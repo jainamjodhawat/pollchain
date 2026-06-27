@@ -28,17 +28,22 @@ PollChain is a lightweight governance platform that lets any community create pr
 ## Features
 
 - 🗳️ **Create Proposals** — Any holder of 100+ POLL tokens can submit a governance proposal
-- ⚡ **Token-Weighted Voting** — Vote Yes / No / Abstain; weight = your POLL balance
-- 🔗 **Inter-Contract Execution** — Voting contract calls Execution contract on-chain when a proposal passes
+- ⚡ **Token-Weighted Voting** — Vote Yes / No / Abstain; weight = your POLL balance (or √balance under Quadratic Voting)
+- 🔗 **Inter-Contract Execution** — Voting contract calls Execution contract on-chain when a proposal passes, which triggers token transfers from the Treasury
 - 🪙 **Custom SEP-41 Token** — POLL governance token with mint, burn, transfer, allowance
 - 🛡️ **Quorum Protection** — Proposals require minimum participation to be valid
 - 💧 **Token Faucet** — Claim 1,000 POLL/day to participate in governance
 - 🏦 **DAO Treasury** — Community-owned POLL reserve, deposit open to all
-- 🤝 **Vote Delegation** — Delegate your voting power to a trusted community member
+- 🤝 **Vote Delegation** — Delegate your voting power to a trusted community member, aggregating on-chain weight
+- 📊 **Interactive Cash Flow Analytics** — Custom SVG Area and Bar Charts tracking cumulative balance trajectory and side-by-side deposits vs. withdrawals with hover tooltips
+- 🌳 **Delegation Tree visualizer** — Interactive radial SVG node-link graph mapping delegator backing and active representative structures with power flow direction markers
+- 🗳️ **Quadratic Voting (QV)** — On-chain integer square root calculation (`weight = isqrt(weight)`) to reduce whale dominance
+- 🎁 **Voter Rewards System** — Automated participation incentives distributed directly from the Treasury to voters upon vote completion
 - 📊 **Dashboard** — Personal view of your proposals, votes, and voting power
 - 🏆 **Leaderboard** — Top governance participants ranked by activity
 - 📱 **Mobile Responsive** — Full mobile navbar with slide-down drawer
 - 🔄 **CI/CD** — GitHub Actions: contract tests, WASM build, TypeScript check, security audit
+
 
 ---
 
@@ -130,14 +135,14 @@ VITE_DELEGATION_CONTRACT_ID=CAZ4STQXG7U6MXA5SNRYEFBISKT2NPOKHPEJBBLJUGTQGK2COQOM
 
 ```
 governance_token : 4 tests — initialize, mint, transfer, burn
-voting           : 6 tests — create, vote+pass, vote+fail, double-vote, cancel, quorum
-execution        : 3 tests — initialize, execute, double-init
+voting           : 9 tests — create, double-vote, rewards, cancel, vote+finalize-fail, vote+finalize-pass, quorum, quadratic-voting, delegated-power
+execution        : 5 tests — double-initialize, initialize, execute-logs, withdraw-specific, withdraw-treasury
 faucet           : 5 tests — claim, double-claim, cooldown, set-amount, reserve
 treasury         : 4 tests — deposit, withdraw-admin, unauthorized, tx-log
 delegation       : 4 tests — delegate, undelegate, voting-power, self-delegate
 ```
 
-**All 26 tests pass ✅**
+**All 31 tests pass ✅**
 
 ---
 

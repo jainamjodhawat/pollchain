@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle, XCircle, MinusCircle, X } from "lucide-react";
+import { CheckCircle, XCircle, MinusCircle, X, Sparkles } from "lucide-react";
 import type { Proposal } from "../hooks/useProposals";
 import { formatPoll } from "../utils/stellar";
 
@@ -7,7 +7,10 @@ interface Props {
   proposal: Proposal;
   onClose: () => void;
   onVote: (choice: "Yes" | "No" | "Abstain") => Promise<void>;
-  votingPower: number;
+  votingPower: bigint;
+  effectiveWeight: bigint;
+  quadraticVotingActive: boolean;
+  rewardAmount: bigint;
 }
 
 export default function VoteModal({
@@ -15,10 +18,11 @@ export default function VoteModal({
   onClose,
   onVote,
   votingPower,
+  effectiveWeight,
+  quadraticVotingActive,
+  rewardAmount,
 }: Props) {
-  const [selected, setSelected] = useState<"Yes" | "No" | "Abstain" | null>(
-    null
-  );
+  const [selected, setSelected] = useState<"Yes" | "No" | "Abstain" | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +36,11 @@ export default function VoteModal({
       setSuccess(true);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Transaction failed";
-      if (msg.includes("UnreachableCodeReached") || msg.includes("no voting power") || msg.includes("insufficient")) {
+      if (
+        msg.includes("UnreachableCodeReached") ||
+        msg.includes("no voting power") ||
+        msg.includes("insufficient")
+      ) {
         setError("You need POLL tokens to vote. Visit the Faucet page to claim free tokens.");
       } else if (msg.includes("already voted")) {
         setError("You have already voted on this proposal.");
@@ -61,7 +69,7 @@ export default function VoteModal({
     >
       <div
         className="card"
-        style={{ width: "100%", maxWidth: 480, padding: 28 }}
+        style={{ width: "100%", maxWidth: 480, padding: 28, background: "white" }}
       >
         {/* Header */}
         <div
@@ -107,8 +115,7 @@ export default function VoteModal({
             />
             <h4 style={{ marginBottom: 8 }}>Vote Cast Successfully!</h4>
             <p style={{ fontSize: "0.875rem", marginBottom: 20 }}>
-              Your vote of <strong>{selected}</strong> has been recorded
-              on-chain.
+              Your vote of <strong>{selected}</strong> has been submitted and recorded on-chain.
             </p>
             <button className="btn btn-primary" onClick={onClose}>
               Close
@@ -116,19 +123,62 @@ export default function VoteModal({
           </div>
         ) : (
           <>
-            {/* Voting power */}
+            {/* Voting power & QV details */}
             <div
               style={{
                 background: "var(--color-accent-lighter)",
                 borderRadius: "var(--radius-md)",
-                padding: "10px 14px",
+                padding: "12px 16px",
                 marginBottom: 20,
                 fontSize: "0.875rem",
                 color: "var(--color-accent)",
-                fontWeight: 600,
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
               }}
             >
-              Your voting power: {formatPoll(votingPower)} POLL
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Base Voting Power:</span>
+                <strong>{formatPoll(votingPower)} POLL</strong>
+              </div>
+              {quadraticVotingActive && (
+                <>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      borderTop: "1px dashed rgba(92, 107, 46, 0.25)",
+                      paddingTop: 6,
+                      marginTop: 2,
+                    }}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <Sparkles size={12} /> Effective QV Weight:
+                    </span>
+                    <strong>{formatPoll(effectiveWeight)} votes</strong>
+                  </div>
+                  <div style={{ fontSize: "0.725rem", color: "var(--color-text-secondary)", opacity: 0.8 }}>
+                    Quadratic voting is enabled. Weight is calculated as √Power to mitigate whale influence.
+                  </div>
+                </>
+              )}
+              {rewardAmount > 0n && (
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "var(--color-passed)",
+                    marginTop: 4,
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    borderTop: "1px solid rgba(92, 107, 46, 0.15)",
+                    paddingTop: 6,
+                  }}
+                >
+                  🎁 Participate to receive a {formatPoll(rewardAmount)} POLL reward!
+                </div>
+              )}
             </div>
 
             {/* Vote options */}
@@ -144,39 +194,24 @@ export default function VoteModal({
               </div>
               <div className="vote-options">
                 <button
-                  className={`vote-option ${
-                    selected === "Yes" ? "selected-yes" : ""
-                  }`}
+                  className={`vote-option ${selected === "Yes" ? "selected-yes" : ""}`}
                   onClick={() => setSelected("Yes")}
                 >
-                  <CheckCircle
-                    size={16}
-                    style={{ margin: "0 auto 4px", display: "block" }}
-                  />
+                  <CheckCircle size={16} style={{ margin: "0 auto 4px", display: "block" }} />
                   Yes
                 </button>
                 <button
-                  className={`vote-option ${
-                    selected === "No" ? "selected-no" : ""
-                  }`}
+                  className={`vote-option ${selected === "No" ? "selected-no" : ""}`}
                   onClick={() => setSelected("No")}
                 >
-                  <XCircle
-                    size={16}
-                    style={{ margin: "0 auto 4px", display: "block" }}
-                  />
+                  <XCircle size={16} style={{ margin: "0 auto 4px", display: "block" }} />
                   No
                 </button>
                 <button
-                  className={`vote-option ${
-                    selected === "Abstain" ? "selected-abstain" : ""
-                  }`}
+                  className={`vote-option ${selected === "Abstain" ? "selected-abstain" : ""}`}
                   onClick={() => setSelected("Abstain")}
                 >
-                  <MinusCircle
-                    size={16}
-                    style={{ margin: "0 auto 4px", display: "block" }}
-                  />
+                  <MinusCircle size={16} style={{ margin: "0 auto 4px", display: "block" }} />
                   Abstain
                 </button>
               </div>
@@ -189,17 +224,13 @@ export default function VoteModal({
             )}
 
             <div style={{ display: "flex", gap: 10 }}>
-              <button
-                className="btn btn-secondary"
-                onClick={onClose}
-                style={{ flex: 1 }}
-              >
+              <button className="btn btn-secondary" onClick={onClose} style={{ flex: 1 }}>
                 Cancel
               </button>
               <button
                 className="btn btn-primary"
                 onClick={handleVote}
-                disabled={!selected || loading}
+                disabled={!selected || loading || votingPower === 0n}
                 style={{ flex: 2 }}
               >
                 {loading ? (

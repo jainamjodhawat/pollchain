@@ -7,7 +7,6 @@ import { shortenAddress } from "../utils/stellar";
 const NAV_LINKS = [
   { to: "/", label: "Home", icon: <Home size={16} /> },
   { to: "/proposals", label: "Proposals", icon: <Vote size={16} /> },
-  { to: "/my-proposals", label: "My Proposals", icon: <FileText size={16} /> },
   { to: "/create", label: "Create", icon: <Plus size={16} /> },
   { to: "/faucet", label: "Faucet", icon: <Droplets size={16} /> },
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
@@ -127,7 +126,14 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="navbar-actions">
+          <Link
+            to="/my-proposals"
+            className={`navbar-personal-link ${location.pathname === "/my-proposals" ? "navbar-personal-link-active" : ""}`}
+          >
+            <FileText size={15} />
+            My Proposals
+          </Link>
           <div className="wallet-btn-desktop">
             {loading ? (
               <div className="spinner" />
@@ -184,6 +190,18 @@ export default function Navbar() {
         </div>
 
         <div className="mobile-divider" />
+
+        <div className="mobile-nav-section-label">Your governance</div>
+        <Link
+          to="/my-proposals"
+          className={`mobile-nav-link ${location.pathname === "/my-proposals" ? "mobile-nav-link-active" : ""}`}
+          onClick={() => setMobileOpen(false)}
+        >
+          <span className="mobile-nav-icon"><FileText size={16} /></span>
+          My Proposals
+        </Link>
+
+        <div className="mobile-nav-section-label">Explore PollChain</div>
 
         <div className="mobile-nav-links">
           {NAV_LINKS.map((l) => (

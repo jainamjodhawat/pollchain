@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Trophy, TrendingUp } from "lucide-react";
+import { Crown, FileText, Trophy, Users } from "lucide-react";
 import { useProposals } from "../hooks/useProposals";
 import { fetchTokenBalance } from "../utils/contracts";
 import { formatPoll, shortenAddress } from "../utils/stellar";
 
 interface LeaderEntry {
   address: string;
-  voteCount: number;
+  proposalCount: number;
   balance: bigint;
 }
 
@@ -27,15 +27,15 @@ export default function Leaderboard() {
     Promise.all(
       addresses.map(async (addr) => {
         const balance = await fetchTokenBalance(addr).catch(() => 0n);
-        const voteCount = proposals.filter((p) => p.proposer === addr).length;
-        return { address: addr, voteCount, balance };
+        const proposalCount = proposals.filter((p) => p.proposer === addr).length;
+        return { address: addr, proposalCount, balance };
       })
     )
       .then((data) => {
-        // Sort by vote count desc, then balance desc
+        // Rank proposal authors by governance activity, then token balance.
         data.sort((a, b) =>
-          b.voteCount !== a.voteCount
-            ? b.voteCount - a.voteCount
+          b.proposalCount !== a.proposalCount
+            ? b.proposalCount - a.proposalCount
             : Number(b.balance - a.balance)
         );
         setEntries(data);
@@ -44,76 +44,100 @@ export default function Leaderboard() {
   }, [proposals]);
 
   const medals = ["🥇", "🥈", "🥉"];
+  const leaders = entries.slice(0, 3);
 
   return (
     <div className="page-wrapper">
-      <div className="container" style={{ maxWidth: 720 }}>
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <div style={{ width: 64, height: 64, background: "var(--color-accent-lighter)", borderRadius: "var(--radius-xl)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+      <div className="container leaderboard-page">
+        <div className="leaderboard-hero">
+          <div className="leaderboard-hero-icon">
             <Trophy size={28} color="var(--color-accent)" />
           </div>
-          <h1 style={{ marginBottom: 8 }}>Leaderboard</h1>
-          <p>Most active governance participants in PollChain.</p>
+          <div>
+            <div className="leaderboard-eyebrow">Governance activity</div>
+            <h1 style={{ marginBottom: 8 }}>Community leaderboard</h1>
+            <p>Proposal authors shaping PollChain’s on-chain agenda.</p>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div className="stats-row" style={{ marginBottom: 24 }}>
+        <div className="stats-row leaderboard-stats">
           <div className="stat-item">
             <div className="stat-value">{proposals.length}</div>
-            <div className="stat-label">Total Proposals</div>
+            <div className="stat-label">Proposals created</div>
           </div>
           <div className="stat-item">
             <div className="stat-value">{entries.length}</div>
-            <div className="stat-label">Active Proposers</div>
+            <div className="stat-label">Proposal authors</div>
           </div>
         </div>
 
-        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-          {loading || loadingBalances ? (
-            <div style={{ textAlign: "center", padding: 60 }}>
+        {loading || loadingBalances ? (
+          <div className="card leaderboard-loading">
+            <div>
               <div className="spinner" style={{ margin: "0 auto 12px" }} />
-              <p>Loading leaderboard...</p>
+              <p>Loading community activity...</p>
             </div>
-          ) : entries.length === 0 ? (
+          </div>
+        ) : entries.length === 0 ? (
+          <div className="card">
             <div className="empty-state">
               <div className="empty-state-icon">🏆</div>
-              <div className="empty-state-title">No data yet</div>
-              <div className="empty-state-desc">Create proposals to appear on the leaderboard.</div>
+              <div className="empty-state-title">No activity yet</div>
+              <div className="empty-state-desc">Create a proposal to become the first community leader.</div>
             </div>
-          ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "var(--color-bg)", borderBottom: "1px solid var(--color-border)" }}>
-                  {["Rank", "Address", "Proposals", "POLL Balance"].map((h) => (
-                    <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: "0.8125rem", fontWeight: 600, color: "var(--color-text-muted)" }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((e, i) => (
-                  <tr key={e.address} style={{ borderBottom: "1px solid var(--color-border)" }}>
-                    <td style={{ padding: "14px 20px", fontWeight: 700, fontSize: "1.125rem" }}>
-                      {medals[i] ?? `#${i + 1}`}
-                    </td>
-                    <td style={{ padding: "14px 20px", fontFamily: "monospace", fontSize: "0.875rem" }}>
-                      {shortenAddress(e.address)}
-                    </td>
-                    <td style={{ padding: "14px 20px" }}>
-                      <span style={{ background: "var(--color-accent-lighter)", color: "var(--color-accent)", padding: "2px 10px", borderRadius: "var(--radius-full)", fontSize: "0.8125rem", fontWeight: 600 }}>
-                        {e.voteCount}
-                      </span>
-                    </td>
-                    <td style={{ padding: "14px 20px", fontWeight: 600 }}>
-                      {formatPoll(e.balance)} POLL
-                    </td>
-                  </tr>
+          </div>
+        ) : (
+          <>
+            <section className="leader-podium" aria-label="Top proposal authors">
+              {leaders.map((entry, index) => (
+                <article className={`leader-card leader-card-${index + 1}`} key={entry.address}>
+                  <div className="leader-rank">{index === 0 ? <Crown size={18} /> : medals[index]}</div>
+                  <div className="leader-address">{shortenAddress(entry.address)}</div>
+                  <div className="leader-metric">
+                    <strong>{entry.proposalCount}</strong>
+                    proposal{entry.proposalCount === 1 ? "" : "s"}
+                  </div>
+                  <div className="leader-balance">{formatPoll(entry.balance)} POLL</div>
+                </article>
+              ))}
+            </section>
+
+            <section className="card leader-list" aria-label="All ranked proposal authors">
+              <div className="leader-list-header">
+                <div>
+                  <h3>All contributors</h3>
+                  <p>Ranked by proposals created, then POLL balance.</p>
+                </div>
+                <span className="leader-list-count"><Users size={14} /> {entries.length}</span>
+              </div>
+              <div className="leader-list-columns" aria-hidden="true">
+                <span>Rank</span>
+                <span>Wallet</span>
+                <span>Activity</span>
+                <span>Balance</span>
+              </div>
+              <div>
+                {entries.map((entry, index) => (
+                  <div className="leader-row" key={entry.address}>
+                    <div className="leader-row-rank">{medals[index] ?? `#${index + 1}`}</div>
+                    <div className="leader-row-address">
+                      <span>{shortenAddress(entry.address)}</span>
+                      <a
+                        href={`https://stellar.expert/explorer/testnet/account/${entry.address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View wallet
+                      </a>
+                    </div>
+                    <div className="leader-row-activity"><FileText size={14} /> {entry.proposalCount}</div>
+                    <div className="leader-row-balance">{formatPoll(entry.balance)} POLL</div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+              </div>
+            </section>
+          </>
+        )}
       </div>
     </div>
   );

@@ -175,6 +175,22 @@ response sheet - https://docs.google.com/spreadsheets/d/1OpMTAgXctv9_4_mjb31TjOV
 
 ---
 
+## Latest User Feedback Pass
+
+The following changes were requested through user feedback and implemented as separate commits by the repository owner (`jainamjodhawat`).
+
+| # | User Feedback | Status | Fix Commit |
+|---|---|---|---|
+| 1 | "When I vote, I don’t see the percentage change instantly." | ✅ Fixed — keeps the optimistic result visible until the chain read confirms it. | [`54d45fe`](https://github.com/jainamjodhawat/pollchain/commit/54d45fe) |
+| 2 | "I would like a new tab to view my proposals; it looks out of place in the nav." | ✅ Fixed — moved My Proposals into a dedicated personal-governance control. | [`7a636d3`](https://github.com/jainamjodhawat/pollchain/commit/7a636d3) |
+| 3 | "The leaderboard layout could be better." | ✅ Fixed — redesigned it with a top-three view, responsive rankings, and wallet links. | [`7a636d3`](https://github.com/jainamjodhawat/pollchain/commit/7a636d3) |
+| 4 | "The Connect Wallet flow doesn’t work sometimes." | ✅ Fixed — passive checks no longer request access, and duplicate wallet prompts are prevented. | [`bd6ac5f`](https://github.com/jainamjodhawat/pollchain/commit/bd6ac5f) |
+| 5 | "Loading takes too much time." | ✅ Fixed — proposal reads share a cached request and refresh without replacing visible content. | [`bd6ac5f`](https://github.com/jainamjodhawat/pollchain/commit/bd6ac5f) |
+| 6 | "The home page should contain more information on the platform." | ✅ Fixed — added a governance walkthrough and safeguard explainer. | [`ad1ddb2`](https://github.com/jainamjodhawat/pollchain/commit/ad1ddb2) |
+| 7 | "Unable to vote No on the third proposal." | ✅ Fixed — preserves the failed-vote message, rolls back only failed optimistic state, and validates all vote choices consistently. | [`54d45fe`](https://github.com/jainamjodhawat/pollchain/commit/54d45fe) |
+
+---
+
 ## License
 
 MIT

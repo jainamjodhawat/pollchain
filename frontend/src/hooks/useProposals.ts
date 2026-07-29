@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   fetchProposals,
-  fetchProposalCount,
   fetchProposal,
   type RawProposal,
 } from "../utils/contracts";
@@ -22,6 +21,24 @@ export interface Proposal {
   status: "Active" | "Passed" | "Failed" | "Executed" | "Cancelled";
   created_at: number;
   tags: string[];
+}
+
+let proposalCache: Proposal[] | null = null;
+let proposalRequest: Promise<Proposal[]> | null = null;
+
+async function loadProposalList(force = false): Promise<Proposal[]> {
+  if (!force && proposalCache) return proposalCache;
+  if (proposalRequest) return proposalRequest;
+
+  const request = fetchProposals(1, 50).then((raws) => raws.map(normalise));
+  proposalRequest = request;
+  try {
+    const proposals = await request;
+    proposalCache = proposals;
+    return proposals;
+  } finally {
+    proposalRequest = null;
+  }
 }
 
 function normalise(raw: RawProposal): Proposal {
@@ -55,31 +72,28 @@ function normalise(raw: RawProposal): Proposal {
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useProposals() {
-  const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [proposals, setProposals] = useState<Proposal[]>(() => proposalCache ?? []);
+  const [loading, setLoading] = useState(proposalCache === null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
+  const fetchAll = useCallback(async (force = false) => {
+    // Keep cached content visible while a newer chain read is in flight.
+    if (proposalCache === null) setLoading(true);
     setError(null);
     try {
-      const count = await fetchProposalCount();
-      if (count === 0) {
-        setProposals([]);
-        return;
-      }
-      // Fetch up to 50 proposals starting from #1
-      const raws = await fetchProposals(1, Math.min(count, 50));
-      setProposals(raws.map(normalise));
+      const next = await loadProposalList(force);
+      setProposals(next);
+      return next;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load proposals");
+      return null;
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAll();
+    void fetchAll(proposalCache !== null);
   }, [fetchAll]);
 
   const getProposal = useCallback(
@@ -87,7 +101,9 @@ export function useProposals() {
     [proposals]
   );
 
-  return { proposals, loading, error, refetch: fetchAll, getProposal };
+  const refetch = useCallback(() => fetchAll(true), [fetchAll]);
+
+  return { proposals, loading, error, refetch, getProposal };
 }
 
 // ── Single proposal hook (for detail page) ────────────────────────────────────
@@ -97,8 +113,8 @@ export function useProposal(id: number) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (): Promise<Proposal | null> => {
-    setLoading(true);
+  const load = useCallback(async (showLoading = true): Promise<Proposal | null> => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       const raw = await fetchProposal(id);
@@ -109,7 +125,7 @@ export function useProposal(id: number) {
       setError(e instanceof Error ? e.message : "Failed to load proposal");
       return null;
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [id]);
 
@@ -117,7 +133,9 @@ export function useProposal(id: number) {
     load();
   }, [load]);
 
-  return { proposal, loading, error, refetch: load };
+  const refetch = useCallback(() => load(false), [load]);
+
+  return { proposal, loading, error, refetch };
 }
 
 // ── Stats hook ────────────────────────────────────────────────────────────────

@@ -97,14 +97,17 @@ export function useProposal(id: number) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<Proposal | null> => {
     setLoading(true);
     setError(null);
     try {
       const raw = await fetchProposal(id);
-      setProposal(raw ? normalise(raw) : null);
+      const nextProposal = raw ? normalise(raw) : null;
+      setProposal(nextProposal);
+      return nextProposal;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load proposal");
+      return null;
     } finally {
       setLoading(false);
     }

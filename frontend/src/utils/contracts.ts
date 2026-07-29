@@ -40,6 +40,13 @@ function strVal(s: string): xdr.ScVal {
   return nativeToScVal(s, { type: "string" });
 }
 
+function voteChoiceVal(choice: "Yes" | "No" | "Abstain"): xdr.ScVal {
+  // Soroban unit enums are encoded as a one-element vector containing the
+  // variant symbol. Keep this conversion in one place so every option,
+  // including "No", has the same validated wire shape.
+  return xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(choice)]);
+}
+
 // ── Simulate a read-only call ─────────────────────────────────────────────────
 
 async function simulateRead(
@@ -243,14 +250,10 @@ export async function castVote(
   proposalId: number,
   choice: "Yes" | "No" | "Abstain"
 ): Promise<string> {
-  // Soroban enum: { tag: "Yes" | "No" | "Abstain", values: void[] }
-  const choiceScVal = xdr.ScVal.scvVec([
-    xdr.ScVal.scvSymbol(choice),
-  ]);
   return invokeContract(publicKey, VOTING_CONTRACT_ID, "vote", [
     addressVal(publicKey),
     u64Val(proposalId),
-    choiceScVal,
+    voteChoiceVal(choice),
   ]);
 }
 
@@ -382,4 +385,3 @@ export async function fetchDelegators(address: string): Promise<string[]> {
     return [];
   }
 }
-

@@ -97,20 +97,33 @@ export default function ProposalDetail() {
   const handleVote = async (choice: "Yes" | "No" | "Abstain") => {
     if (!wallet.publicKey) throw new Error("Wallet not connected");
 
-    // Optimistically update vote counts immediately using effective weight
+    // Update the visible result before confirmation, but do not mark the
+    // wallet as voted until the transaction is actually confirmed.
     const weight = Number(effectiveWeight);
-    setOptimisticVotes({
+    const pendingVotes = {
       yes: (proposal!.yes_votes) + (choice === "Yes" ? weight : 0),
       no: (proposal!.no_votes) + (choice === "No" ? weight : 0),
       abstain: (proposal!.abstain_votes) + (choice === "Abstain" ? weight : 0),
-    });
-    setUserVote(choice);
-    setShowVoteModal(false);
+    };
+    setOptimisticVotes(pendingVotes);
 
     try {
       const hash = await castVote(wallet.publicKey, proposalId, choice);
       setTxHash(hash);
-      refetch().then(() => setOptimisticVotes(null));
+      setUserVote(choice);
+
+      // Keep the instant result visible until an RPC read includes the vote.
+      // Soroban RPC can lag one ledger after a successful transaction.
+      void refetch().then((refreshed) => {
+        if (
+          refreshed &&
+          refreshed.yes_votes >= pendingVotes.yes &&
+          refreshed.no_votes >= pendingVotes.no &&
+          refreshed.abstain_votes >= pendingVotes.abstain
+        ) {
+          setOptimisticVotes(null);
+        }
+      });
     } catch (e) {
       setOptimisticVotes(null);
       throw e;

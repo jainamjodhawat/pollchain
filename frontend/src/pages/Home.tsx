@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Vote, Zap, Shield, Globe, ArrowRight, Users } from "lucide-react";
+import { Vote, Zap, Shield, Globe, ArrowRight, Users, CheckCircle2, Coins, FileText, Network, Gift } from "lucide-react";
 import { useStats, useProposals } from "../hooks/useProposals";
 import ProposalCard from "../components/ProposalCard";
 import { formatPoll } from "../utils/stellar";
@@ -65,6 +65,61 @@ export default function Home() {
               </div>
               <div className="stat-label">POLL Votes Cast</div>
             </div>
+          </div>
+        </section>
+
+        {/* Governance flow */}
+        <section className="home-section home-flow-section">
+          <div className="home-section-heading">
+            <div>
+              <div className="section-eyebrow">How PollChain works</div>
+              <h2>From an idea to an on-chain decision</h2>
+            </div>
+            <p>
+              PollChain keeps each stage of governance visible: who proposed,
+              how the community voted, and what the approved decision executed.
+            </p>
+          </div>
+
+          <div className="governance-flow">
+            {[
+              {
+                step: "01",
+                icon: <Coins size={20} />,
+                title: "Get voting power",
+                description: "Claim test POLL tokens from the faucet or receive delegated voting power from another holder.",
+                to: "/faucet",
+                cta: "Open faucet",
+              },
+              {
+                step: "02",
+                icon: <FileText size={20} />,
+                title: "Put forward a proposal",
+                description: "Add a clear title, context, and execution instructions so the community can make an informed decision.",
+                to: "/create",
+                cta: "Create proposal",
+              },
+              {
+                step: "03",
+                icon: <Vote size={20} />,
+                title: "Vote, finalize, execute",
+                description: "Votes are recorded on Stellar. Once a proposal meets quorum, it can be finalized for on-chain execution.",
+                to: "/proposals",
+                cta: "Browse proposals",
+              },
+            ].map((item) => (
+              <article className="governance-step" key={item.step}>
+                <div className="governance-step-topline">
+                  <span>{item.step}</span>
+                  <div className="governance-step-icon">{item.icon}</div>
+                </div>
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
+                <Link to={item.to} className="governance-step-link">
+                  {item.cta} <ArrowRight size={14} />
+                </Link>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -160,6 +215,38 @@ export default function Home() {
                 <div className="feature-icon">{f.icon}</div>
                 <h4 style={{ marginBottom: 8 }}>{f.title}</h4>
                 <p style={{ fontSize: "0.875rem" }}>{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Governance safeguards */}
+        <section className="home-section governance-safeguards">
+          <div className="safeguard-copy">
+            <div className="section-eyebrow">Built for accountable decisions</div>
+            <h2>Every vote has context, weight, and a recorded outcome.</h2>
+            <p>
+              PollChain is designed for communities that want participation without
+              losing the audit trail. The governance contract applies the same
+              rules to every proposal and publishes the result on-chain.
+            </p>
+            <Link to="/about" className="btn btn-secondary">
+              Explore the protocol <ArrowRight size={15} />
+            </Link>
+          </div>
+          <div className="safeguard-list">
+            {[
+              { icon: <Shield size={18} />, title: "Quorum protection", text: "A proposal needs meaningful participation before it can pass." },
+              { icon: <Network size={18} />, title: "Delegated governance", text: "Token holders can delegate their voting power without giving up ownership." },
+              { icon: <Gift size={18} />, title: "Participation rewards", text: "Active voters can receive POLL rewards configured by the treasury." },
+              { icon: <CheckCircle2 size={18} />, title: "Traceable execution", text: "Passed decisions can trigger connected contract actions with an on-chain record." },
+            ].map((item) => (
+              <div className="safeguard-item" key={item.title}>
+                <div className="safeguard-icon">{item.icon}</div>
+                <div>
+                  <h4>{item.title}</h4>
+                  <p>{item.text}</p>
+                </div>
               </div>
             ))}
           </div>

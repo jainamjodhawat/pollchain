@@ -6,25 +6,21 @@
  */
 
 import {
-  Contract,
-  TransactionBuilder,
-  BASE_FEE,
   nativeToScVal,
-  scValToNative,
   Address,
   xdr,
-  Keypair,
-  rpc,
 } from "@stellar/stellar-sdk";
 import {
-  NETWORK_PASSPHRASE,
-  RPC_URL,
   VOTING_CONTRACT_ID,
   GOVERNANCE_TOKEN_CONTRACT_ID,
 } from "./constants";
-import { signTx } from "./wallet";
+import {
+  invokeContract,
+  readContract as simulateRead,
+  server,
+} from "../integrations/sorobanClient";
 
-export const server = new rpc.Server(RPC_URL, { allowHttp: false });
+export { invokeContract, server };
 
 // ── ScVal helpers ─────────────────────────────────────────────────────────────
 
@@ -45,95 +41,6 @@ function voteChoiceVal(choice: "Yes" | "No" | "Abstain"): xdr.ScVal {
   // variant symbol. Keep this conversion in one place so every option,
   // including "No", has the same validated wire shape.
   return xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(choice)]);
-}
-
-// ── Simulate a read-only call ─────────────────────────────────────────────────
-
-async function simulateRead(
-  contractId: string,
-  method: string,
-  args: xdr.ScVal[] = []
-): Promise<unknown> {
-  // Use a random keypair — simulation doesn't need a funded account
-  const dummy = Keypair.random();
-  const dummyAccount = {
-    accountId: () => dummy.publicKey(),
-    sequenceNumber: () => "0",
-    incrementSequenceNumber() {},
-  };
-
-  const contract = new Contract(contractId);
-  const tx = new TransactionBuilder(dummyAccount as any, {
-    fee: BASE_FEE,
-    networkPassphrase: NETWORK_PASSPHRASE,
-  })
-    .addOperation(contract.call(method, ...args))
-    .setTimeout(30)
-    .build();
-
-  const sim = await server.simulateTransaction(tx);
-
-  if ("error" in sim) {
-    throw new Error(`Simulation error: ${(sim as any).error}`);
-  }
-
-  const successSim = sim as rpc.Api.SimulateTransactionSuccessResponse;
-  if (!successSim.result) return null;
-  return scValToNative(successSim.result.retval);
-}
-
-// ── Build, sign, submit, confirm ──────────────────────────────────────────────
-
-export async function invokeContract(
-  publicKey: string,
-  contractId: string,
-  method: string,
-  args: xdr.ScVal[]
-): Promise<string> {
-  const account = await server.getAccount(publicKey);
-  const contract = new Contract(contractId);
-
-  const tx = new TransactionBuilder(account, {
-    fee: BASE_FEE,
-    networkPassphrase: NETWORK_PASSPHRASE,
-  })
-    .addOperation(contract.call(method, ...args))
-    .setTimeout(30)
-    .build();
-
-  // Simulate to get soroban data + accurate fee
-  const sim = await server.simulateTransaction(tx);
-  if ("error" in sim) {
-    throw new Error(`Simulation failed: ${(sim as any).error}`);
-  }
-
-  const preparedTx = rpc
-    .assembleTransaction(tx, sim as rpc.Api.SimulateTransactionSuccessResponse)
-    .build();
-
-  // Sign via Freighter
-  const signedXdr = await signTx(preparedTx.toXDR(), NETWORK_PASSPHRASE);
-
-  // Submit
-  const submitResult = await server.sendTransaction(
-    TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE) as any
-  );
-
-  if (submitResult.status === "ERROR") {
-    throw new Error(`Submit failed: ${JSON.stringify(submitResult.errorResult)}`);
-  }
-
-  // Poll for confirmation (up to 30s)
-  const hash = submitResult.hash;
-  for (let i = 0; i < 20; i++) {
-    await new Promise((r) => setTimeout(r, 1500));
-    const status = await server.getTransaction(hash);
-    if (status.status === rpc.Api.GetTransactionStatus.SUCCESS) return hash;
-    if (status.status === rpc.Api.GetTransactionStatus.FAILED) {
-      throw new Error(`Transaction failed on-chain. Hash: ${hash}`);
-    }
-  }
-  throw new Error("Transaction timed out. Check Stellar Expert for status.");
 }
 
 // ── Voting contract — reads ───────────────────────────────────────────────────

@@ -110,6 +110,15 @@ export async function invokeContract(
     const status = await server.getTransaction(submission.hash);
 
     if (status.status === rpc.Api.GetTransactionStatus.SUCCESS) {
+      console.info(
+        JSON.stringify({
+          level: "info",
+          event: "contract_transaction_confirmed",
+          method,
+          transactionHash: submission.hash,
+          timestamp: new Date().toISOString(),
+        })
+      );
       return submission.hash;
     }
     if (status.status === rpc.Api.GetTransactionStatus.FAILED) {

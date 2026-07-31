@@ -6,7 +6,7 @@ by the project team do not count as real-user proof.
 
 ## Tester flow
 
-1. Open the [PollChain live application](https://dist-six-psi-56.vercel.app).
+1. Open the [PollChain live application](https://pollchain-orcin.vercel.app).
 2. Install or unlock Freighter and select Stellar Testnet.
 3. Connect the wallet and confirm the displayed public address.
 4. Open **Faucet** and claim test POLL.

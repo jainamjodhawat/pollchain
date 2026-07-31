@@ -8,7 +8,7 @@ evidence from evidence that still requires an external human action.
 | Requirement | Status | Evidence |
 |---|---|---|
 | Public GitHub repository | Ready | [jainamjodhawat/pollchain](https://github.com/jainamjodhawat/pollchain) |
-| Production MVP | Ready | [Live application](https://dist-six-psi-56.vercel.app) and feature list in the main README |
+| Production MVP | Ready and deployed | [Live application](https://pollchain-orcin.vercel.app) and feature list in the main README |
 | Stable frontend/contract architecture | Ready | [Architecture and 22-function map](./ARCHITECTURE.md) |
 | Frontend Soroban integration | Ready | `frontend/src/integrations/sorobanClient.ts` and `frontend/src/utils/contracts.ts` |
 | Mobile responsive UI | Ready | Desktop/mobile screenshots in the main README |
@@ -17,8 +17,8 @@ evidence from evidence that still requires an external human action.
 | Minimum 15 meaningful commits | Ready | More than 40 commits, including the focused Level 4 remediation commits below |
 | Contract CI | Ready | `.github/workflows/ci.yml`: test, strict Clippy, release WASM build and artifact |
 | Frontend CI | Ready | `.github/workflows/ci.yml`: install, integration map, lint, type-check, build and audit |
-| CD validation | Ready in repository | `.github/workflows/deployment-validation.yml` and `scripts/smoke-production.mjs` |
-| Monitoring/analytics integration | Ready in repository | Consent-gated Vercel Analytics and Speed Insights; disabled until deployment flag and visitor consent |
+| CD validation | Ready and verified | `.github/workflows/deployment-validation.yml`; `/`, `/proposals`, and `/about` return HTTP 200 at the production URL |
+| Monitoring/analytics integration | Enabled in production | Consent-gated Vercel Analytics and Speed Insights; telemetry starts only after visitor consent |
 | User onboarding | Ready | [Real-user onboarding guide](./USER_ONBOARDING.md) |
 | Basic feedback collection | Ready | [Feedback summary](./USER_FEEDBACK.md) and linked form |
 | Complete documentation | Ready | Main README, architecture, onboarding, feedback and this evidence index |
@@ -44,7 +44,6 @@ These cannot be truthfully created from source code alone:
 |---|---|---|
 | 10+ real-user wallet interactions | Not yet proven in this repository | Onboard ten independent testers, collect consented public wallet/transaction evidence, then run `node scripts/validate-user-evidence.mjs` |
 | Monitoring/analytics screenshot | Requires owner dashboard access and traffic | Enable `VITE_ENABLE_ANALYTICS=true`, obtain visitor consent, then capture the Vercel Analytics or Speed Insights dashboard |
-| Current deployed deep-link validation | Requires redeployment of the new Vercel rewrite configuration | Deploy the latest main branch, then run `node scripts/smoke-production.mjs https://<production-url>` |
 
 Do not mark these rows complete or submit generated-wallet activity as
 real-user evidence.

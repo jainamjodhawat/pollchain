@@ -37,7 +37,9 @@ valid testnet wallet and transaction proof.
 
 ## 🌐 Live Demo
 
-**[dist-six-psi-56.vercel.app](https://dist-six-psi-56.vercel.app)**
+**[pollchain-orcin.vercel.app](https://pollchain-orcin.vercel.app)**
+
+Production deployment verified on `/`, `/proposals`, and `/about`.
 
 ## 🎥 Demo Video
 

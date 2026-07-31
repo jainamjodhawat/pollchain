@@ -7,7 +7,7 @@ on:
       deployment_url:
         description: Production or preview URL to validate
         required: true
-        default: https://dist-six-psi-56.vercel.app
+        default: https://pollchain-orcin.vercel.app
         type: string
 
 permissions:

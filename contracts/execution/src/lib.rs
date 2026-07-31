@@ -8,7 +8,7 @@
 
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short,
-    Address, Env, FromVal, String, Vec,
+    Address, Env, String, Vec,
 };
 
 #[contracttype]
@@ -67,7 +67,7 @@ fn get_json_number_value(json: &str, key: &str) -> Option<i128> {
             if end > 0 {
                 let mut num: i128 = 0;
                 let mut is_neg = false;
-                for (i, &b) in val_part[..end].as_bytes().iter().enumerate() {
+                for (i, &b) in val_part.as_bytes()[..end].iter().enumerate() {
                     if i == 0 && b == b'-' {
                         is_neg = true;
                     } else {
@@ -89,6 +89,7 @@ fn get_json_number_value(json: &str, key: &str) -> Option<i128> {
 mod treasury_interface {
     use soroban_sdk::{contractclient, Address, Env};
 
+    #[allow(dead_code)]
     #[contractclient(name = "TreasuryClient")]
     pub trait TreasuryInterface {
         fn withdraw(env: Env, caller: Address, to: Address, amount: i128);

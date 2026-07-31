@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { User, Vote, TrendingUp, ExternalLink } from "lucide-react";
+import { Vote, TrendingUp } from "lucide-react";
 import { useWallet } from "../hooks/useWallet";
 import { usePollBalance } from "../hooks/usePollBalance";
 import { useProposals } from "../hooks/useProposals";

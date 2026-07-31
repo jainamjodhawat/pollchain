@@ -19,9 +19,15 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom", "react-router-dom"],
-          stellar: ["@stellar/stellar-sdk"],
+        manualChunks(id) {
+          if (id.includes("@stellar/stellar-sdk")) return "stellar";
+          if (
+            id.includes("/react/") ||
+            id.includes("/react-dom/") ||
+            id.includes("/react-router")
+          ) {
+            return "vendor";
+          }
         },
       },
     },

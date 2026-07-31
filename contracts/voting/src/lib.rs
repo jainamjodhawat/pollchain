@@ -4,6 +4,7 @@
 //! Execution contract when a proposal passes.
 
 #![no_std]
+#![allow(clippy::too_many_arguments)]
 
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short,
@@ -91,6 +92,7 @@ pub struct VoteRecord {
 mod execution_interface {
     use soroban_sdk::{contractclient, Address, Env, String};
 
+    #[allow(dead_code)]
     #[contractclient(name = "ExecutionClient")]
     pub trait ExecutionInterface {
         fn execute(env: Env, caller: Address, proposal_id: u64, calldata: String);
@@ -104,6 +106,7 @@ use execution_interface::ExecutionClient;
 mod delegation_interface {
     use soroban_sdk::{contractclient, Address, Env};
 
+    #[allow(dead_code)]
     #[contractclient(name = "DelegationClient")]
     pub trait DelegationInterface {
         fn get_voting_power(env: Env, address: Address) -> i128;
@@ -117,6 +120,7 @@ use delegation_interface::DelegationClient;
 mod treasury_interface {
     use soroban_sdk::{contractclient, Address, Env};
 
+    #[allow(dead_code)]
     #[contractclient(name = "TreasuryClient")]
     pub trait TreasuryInterface {
         fn withdraw(env: Env, caller: Address, to: Address, amount: i128);
@@ -755,4 +759,3 @@ mod test {
         assert_eq!(proposal.yes_votes, 1_000_000);
     }
 }
-

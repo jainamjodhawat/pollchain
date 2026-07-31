@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Users,
   CheckCircle,
   AlertCircle,
-  ExternalLink,
   GitMerge,
   Search,
   Sparkles,
@@ -59,30 +58,8 @@ export default function Delegate() {
     y: number;
   } | null>(null);
 
-  // Load user's on-chain delegation state
-  const loadUserDelegation = () => {
-    if (!wallet.publicKey) return;
-    fetchDelegate(wallet.publicKey).then(setCurrentDelegate);
-    fetchVotingPower(wallet.publicKey).then(setVotingPower);
-    
-    // Default the Explorer to the logged-in user
-    setSearchedDelegate(wallet.publicKey);
-    setExplorerAddress(wallet.publicKey);
-    loadIncomingDelegators(wallet.publicKey);
-  };
-
-  useEffect(() => {
-    if (wallet.publicKey) {
-      loadUserDelegation();
-    } else {
-      // Setup demo default if no wallet connected
-      setUseSampleExplorer(true);
-      setSearchedDelegate("GD_DEMO_DELEGATE_PRIMARY");
-    }
-  }, [wallet.publicKey]);
-
   // Load incoming delegators & balances
-  const loadIncomingDelegators = async (address: string) => {
+  const loadIncomingDelegators = useCallback(async (address: string) => {
     setLoadingExplorer(true);
     try {
       const list = await fetchDelegators(address);
@@ -104,7 +81,29 @@ export default function Delegate() {
     } finally {
       setLoadingExplorer(false);
     }
-  };
+  }, []);
+
+  // Load user's on-chain delegation state
+  const loadUserDelegation = useCallback(() => {
+    if (!wallet.publicKey) return;
+    fetchDelegate(wallet.publicKey).then(setCurrentDelegate);
+    fetchVotingPower(wallet.publicKey).then(setVotingPower);
+
+    // Default the Explorer to the logged-in user
+    setSearchedDelegate(wallet.publicKey);
+    setExplorerAddress(wallet.publicKey);
+    loadIncomingDelegators(wallet.publicKey);
+  }, [loadIncomingDelegators, wallet.publicKey]);
+
+  useEffect(() => {
+    if (wallet.publicKey) {
+      loadUserDelegation();
+    } else {
+      // Setup demo default if no wallet connected
+      setUseSampleExplorer(true);
+      setSearchedDelegate("GD_DEMO_DELEGATE_PRIMARY");
+    }
+  }, [loadUserDelegation, wallet.publicKey]);
 
   const handleDelegate = async () => {
     if (!wallet.publicKey || !delegateeInput.trim()) return;
@@ -402,7 +401,7 @@ export default function Delegate() {
                       return (
                         <g
                           key={idx}
-                          onMouseEnter={(e) => setHoveredNode({
+                          onMouseEnter={() => setHoveredNode({
                             address: node.address,
                             balance: node.balance,
                             isDelegate: node.isDelegate,

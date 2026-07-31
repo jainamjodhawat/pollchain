@@ -56,7 +56,7 @@ impl DelegationContract {
             .set(&DataKey::Delegate(delegator.clone()), &delegatee);
 
         // Add delegator to delegatee's list
-        let mut list: Vec<Address> = env
+        let list: Vec<Address> = env
             .storage()
             .persistent()
             .get(&DataKey::DelegatedBy(delegatee.clone()))

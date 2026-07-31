@@ -4,7 +4,7 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short,
+    contract, contractimpl, symbol_short,
     token::Interface as TokenInterface,
     Address, Env, String, Symbol,
 };
@@ -313,10 +313,10 @@ mod test {
             &String::from_str(&env, "PollChain Governance"),
             &String::from_str(&env, "POLL"),
             &7,
-            &1_000_000_0000000,
+            &10_000_000_000_000,
         );
-        assert_eq!(client.balance(&admin), 1_000_000_0000000);
-        assert_eq!(client.total_supply(), 1_000_000_0000000);
+        assert_eq!(client.balance(&admin), 10_000_000_000_000);
+        assert_eq!(client.total_supply(), 10_000_000_000_000);
         assert_eq!(client.decimals(), 7);
     }
 

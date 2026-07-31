@@ -1,0 +1,53 @@
+name: PollChain Production Validation
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: Production or preview URL to validate
+        required: true
+        default: https://dist-six-psi-56.vercel.app
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pollchain-deployment-${{ github.event.deployment.id || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-test:
+    name: Validate deployed application
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    env:
+      DEPLOYMENT_URL: >-
+        ${{ github.event.deployment_status.environment_url ||
+            github.event.inputs.deployment_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Smoke test SPA routes
+        run: node scripts/smoke-production.mjs "$DEPLOYMENT_URL"
+
+      - name: Publish validation summary
+        if: always()
+        run: |
+          {
+            echo "## PollChain deployment validation"
+            echo
+            echo "- URL: $DEPLOYMENT_URL"
+            echo "- Result: ${{ job.status }}"
+            echo "- Routes checked: /, /proposals, /about"
+          } >> "$GITHUB_STEP_SUMMARY"

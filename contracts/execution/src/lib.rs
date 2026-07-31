@@ -237,9 +237,9 @@ mod test {
         Address,
         Address,
         Address,
-        ExecutionContractClient,
-        GovernanceTokenClient,
-        TreasuryContractClient,
+        ExecutionContractClient<'_>,
+        GovernanceTokenClient<'_>,
+        TreasuryContractClient<'_>,
     ) {
         let admin = Address::generate(env);
         let voting = Address::generate(env);

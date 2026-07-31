@@ -166,7 +166,13 @@ mod test {
     use governance_token::{GovernanceToken, GovernanceTokenClient};
     use soroban_sdk::{testutils::Address as _, Env, String};
 
-    fn setup(env: &Env) -> (Address, GovernanceTokenClient, TreasuryContractClient) {
+    fn setup(
+        env: &Env,
+    ) -> (
+        Address,
+        GovernanceTokenClient<'_>,
+        TreasuryContractClient<'_>,
+    ) {
         let admin = Address::generate(env);
         let voting = Address::generate(env);
         let execution = Address::generate(env);
@@ -181,7 +187,7 @@ mod test {
             &String::from_str(env, "PollChain Governance"),
             &String::from_str(env, "POLL"),
             &7,
-            &1_000_000_0000000,
+            &10_000_000_000_000,
         );
         treasury.initialize(&admin, &token_id, &voting, &execution);
         (admin, token, treasury)

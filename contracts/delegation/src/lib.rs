@@ -56,7 +56,7 @@ impl DelegationContract {
             .set(&DataKey::Delegate(delegator.clone()), &delegatee);
 
         // Add delegator to delegatee's list
-        let list: Vec<Address> = env
+        let mut list: Vec<Address> = env
             .storage()
             .persistent()
             .get(&DataKey::DelegatedBy(delegatee.clone()))
@@ -123,7 +123,7 @@ impl DelegationContract {
     }
 
     fn remove_from_delegated_by(env: &Env, delegatee: &Address, delegator: &Address) {
-        let mut list: Vec<Address> = env
+        let list: Vec<Address> = env
             .storage()
             .persistent()
             .get(&DataKey::DelegatedBy(delegatee.clone()))
@@ -146,7 +146,13 @@ mod test {
     use governance_token::{GovernanceToken, GovernanceTokenClient};
     use soroban_sdk::{testutils::Address as _, Env, String};
 
-    fn setup(env: &Env) -> (Address, GovernanceTokenClient, DelegationContractClient) {
+    fn setup(
+        env: &Env,
+    ) -> (
+        Address,
+        GovernanceTokenClient<'_>,
+        DelegationContractClient<'_>,
+    ) {
         let admin = Address::generate(env);
         let token_id = env.register(GovernanceToken, ());
         let del_id = env.register(DelegationContract, ());
@@ -192,7 +198,7 @@ mod test {
     fn test_voting_power() {
         let env = Env::default();
         env.mock_all_auths();
-        let (admin, token, del) = setup(&env);
+        let (_admin, token, del) = setup(&env);
         let a = Address::generate(&env);
         let b = Address::generate(&env);
         token.mint(&a, &500_0000000);

@@ -484,10 +484,10 @@ mod test {
         Address,
         Address,
         Address,
-        GovernanceTokenClient,
-        VotingContractClient,
-        ExecutionContractClient,
-        DelegationContractClient,
+        GovernanceTokenClient<'_>,
+        VotingContractClient<'_>,
+        ExecutionContractClient<'_>,
+        DelegationContractClient<'_>,
     ) {
         let admin = Address::generate(env);
         let token_id = env.register(GovernanceToken, ());
@@ -515,8 +515,8 @@ mod test {
         del.initialize(&admin, &token_id);
 
         // Mint and deposit to fund the treasury so that executions and rewards can succeed
-        token.mint(&admin, &100_000_0000000);
-        treasury.deposit(&admin, &50_000_0000000);
+        token.mint(&admin, &1_000_000_000_000);
+        treasury.deposit(&admin, &500_000_000_000);
 
         voting.initialize(
             &admin,
@@ -733,7 +733,8 @@ mod test {
     fn test_quadratic_voting_calculation() {
         let env = Env::default();
         env.mock_all_auths();
-        let (admin, token_id, voting_id, del_id, treasury_id, token, voting, exec, del) = setup(&env);
+        let (admin, _token_id, _voting_id, del_id, treasury_id, token, voting, _exec, _del) =
+            setup(&env);
 
         // Enable Quadratic Voting via update_config
         voting.update_config(&del_id, &treasury_id, &5_0000000, &true, &100_0000000, &100, &10_0000000);
@@ -741,8 +742,8 @@ mod test {
         let voter = Address::generate(&env);
         
         // Mint 10,000 POLL tokens (10000 * 10^7 = 100_000_0000000)
-        token.mint(&admin, &100_000_0000000);
-        token.mint(&voter, &100_000_0000000);
+        token.mint(&admin, &1_000_000_000_000);
+        token.mint(&voter, &1_000_000_000_000);
 
         let id = voting.create_proposal(
             &admin,

@@ -145,7 +145,13 @@ mod test {
     use governance_token::{GovernanceToken, GovernanceTokenClient};
     use soroban_sdk::{testutils::{Address as _, Ledger as _}, Env, String};
 
-    fn setup(env: &Env) -> (Address, GovernanceTokenClient, FaucetContractClient) {
+    fn setup(
+        env: &Env,
+    ) -> (
+        Address,
+        GovernanceTokenClient<'_>,
+        FaucetContractClient<'_>,
+    ) {
         let admin = Address::generate(env);
         let token_id = env.register(GovernanceToken, ());
         let faucet_id = env.register(FaucetContract, ());
@@ -158,12 +164,12 @@ mod test {
             &String::from_str(env, "PollChain Governance"),
             &String::from_str(env, "POLL"),
             &7,
-            &100_000_0000000,
+            &1_000_000_000_000,
         );
 
         faucet.initialize(&admin, &token_id, &1000_0000000, &100);
         // Fund the faucet with 50,000 POLL
-        faucet.fund(&admin, &50_000_0000000);
+        faucet.fund(&admin, &500_000_000_000);
         (admin, token, faucet)
     }
 
@@ -218,6 +224,6 @@ mod test {
         let env = Env::default();
         env.mock_all_auths();
         let (_admin, _token, faucet) = setup(&env);
-        assert_eq!(faucet.get_reserve(), 50_000_0000000);
+        assert_eq!(faucet.get_reserve(), 500_000_000_000);
     }
 }

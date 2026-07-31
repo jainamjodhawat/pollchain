@@ -2,7 +2,30 @@
 
 > Built on Stellar & Soroban | Stellar Journey to Mastery — Level 4 & 5
 
+[![PollChain CI](https://github.com/jainamjodhawat/pollchain/actions/workflows/ci.yml/badge.svg)](https://github.com/jainamjodhawat/pollchain/actions/workflows/ci.yml)
+[![Production Validation](https://github.com/jainamjodhawat/pollchain/actions/workflows/deployment-validation.yml/badge.svg)](https://github.com/jainamjodhawat/pollchain/actions/workflows/deployment-validation.yml)
+
 PollChain is a lightweight governance platform that lets any community create proposals, vote with POLL tokens, and automatically execute decisions on-chain — all for fractions of a cent on Stellar.
+
+## Level 4 Reviewer Index
+
+The [Level 4 evidence matrix](docs/LEVEL4_EVIDENCE.md) links the production
+demo, testnet deployments, frontend integration, CI/CD, monitoring, onboarding,
+feedback, screenshots, demo video and focused remediation commits.
+
+- [Architecture and frontend-to-contract function map](docs/ARCHITECTURE.md)
+- [Real-user onboarding and wallet-proof process](docs/USER_ONBOARDING.md)
+- [Public user-feedback summary](docs/USER_FEEDBACK.md)
+- [Consent-based wallet-interaction evidence CSV](docs/evidence/user-wallet-interactions.csv)
+
+The repository includes a strict validator for the 10-user requirement:
+
+```bash
+node scripts/validate-user-evidence.mjs
+```
+
+It intentionally fails until ten independent, consented users have supplied
+valid testnet wallet and transaction proof.
 
 ## 🌐 Live Demo
 

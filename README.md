@@ -13,6 +13,12 @@ The [Level 4 evidence matrix](docs/LEVEL4_EVIDENCE.md) links the production
 demo, testnet deployments, frontend integration, CI/CD, monitoring, onboarding,
 feedback, screenshots, demo video and focused remediation commits.
 
+- [`04f3fe6`](https://github.com/jainamjodhawat/pollchain/commit/04f3fe6) — explicit Soroban frontend integration and function cross-check
+- [`9b53dbd`](https://github.com/jainamjodhawat/pollchain/commit/9b53dbd) — blocking contract/frontend CI and deployment validation
+- [`f5b17a9`](https://github.com/jainamjodhawat/pollchain/commit/f5b17a9) — consent-gated monitoring, error recovery and performance work
+- [`b038a61`](https://github.com/jainamjodhawat/pollchain/commit/b038a61) — Level 4 evidence, onboarding and feedback documentation
+- [`f7540a7`](https://github.com/jainamjodhawat/pollchain/commit/f7540a7) — strict Soroban CI cleanup verified across every contract
+
 - [Architecture and frontend-to-contract function map](docs/ARCHITECTURE.md)
 - [Real-user onboarding and wallet-proof process](docs/USER_ONBOARDING.md)
 - [Public user-feedback summary](docs/USER_FEEDBACK.md)

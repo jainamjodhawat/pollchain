@@ -19,6 +19,7 @@ feedback, screenshots, demo video and focused remediation commits.
 - [`b038a61`](https://github.com/jainamjodhawat/pollchain/commit/b038a61) — Level 4 evidence, onboarding and feedback documentation
 - [`f7540a7`](https://github.com/jainamjodhawat/pollchain/commit/f7540a7) — strict Soroban CI cleanup verified across every contract
 - [`18e3320`](https://github.com/jainamjodhawat/pollchain/commit/18e3320) — deterministic frontend and Soroban dependency locks for reproducible CI
+- [`a74dc91`](https://github.com/jainamjodhawat/pollchain/commit/a74dc91) — security audit compatibility fix using the committed Rust lockfile
 
 - [Architecture and frontend-to-contract function map](docs/ARCHITECTURE.md)
 - [Real-user onboarding and wallet-proof process](docs/USER_ONBOARDING.md)

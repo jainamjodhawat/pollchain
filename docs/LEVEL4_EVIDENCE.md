@@ -34,6 +34,7 @@ evidence from evidence that still requires an external human action.
 | [`b038a61`](https://github.com/jainamjodhawat/pollchain/commit/b038a61) | Level 4 reviewer index, architecture map, onboarding guide, feedback summary and real-user evidence validator |
 | [`f7540a7`](https://github.com/jainamjodhawat/pollchain/commit/f7540a7) | Strict Clippy cleanup verified against all contract targets, 31 tests and six release WASM builds |
 | [`18e3320`](https://github.com/jainamjodhawat/pollchain/commit/18e3320) | Committed Rust and npm dependency graphs with locked CI commands for reproducible Linux builds |
+| [`a74dc91`](https://github.com/jainamjodhawat/pollchain/commit/a74dc91) | Cargo audit compatibility correction that checks the committed Rust lockfile |
 
 ## External evidence still required before submission
 

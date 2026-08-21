@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Droplets, CheckCircle, Clock, ExternalLink, AlertCircle } from "lucide-react";
+import { Droplets, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { useWallet } from "../hooks/useWallet";
 import { usePollBalance } from "../hooks/usePollBalance";
 import {
@@ -8,6 +8,7 @@ import {
   fetchFaucetReserve,
 } from "../utils/contracts";
 import { formatPoll } from "../utils/stellar";
+import TransactionReceipt from "../components/TransactionReceipt";
 
 const COOLDOWN_LEDGERS = 17280; // ~1 day
 const CLAIM_AMOUNT = 1000; // POLL
@@ -160,24 +161,7 @@ export default function Faucet() {
 
               {/* Success */}
               {txHash && (
-                <div className="alert alert-success">
-                  <CheckCircle size={16} />
-                  Claimed {CLAIM_AMOUNT.toLocaleString()} POLL!{" "}
-                  <a
-                    href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      color: "inherit",
-                      fontWeight: 700,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    View tx <ExternalLink size={12} />
-                  </a>
-                </div>
+                <TransactionReceipt action={`Claimed ${CLAIM_AMOUNT.toLocaleString()} POLL`} hash={txHash} publicKey={wallet.publicKey} compact />
               )}
 
               {/* Error */}

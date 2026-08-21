@@ -492,6 +492,20 @@ a:hover { color: var(--color-accent-dark); }
 @media (max-width: 800px) { .onboarding-layout { grid-template-columns: 1fr; gap: 8px; } .onboarding-proof-card { position: static; } }
 @media (max-width: 480px) { .onboarding-step { grid-template-columns: 32px 1fr; gap: 14px; } .onboarding-step-marker { width: 32px; height: 32px; } .onboarding-trail::before { left: 15px; } .onboarding-proof-card { padding: 22px; } }
 
+/* ── Transaction proof receipt ─────────────────────────────────────────── */
+.transaction-receipt { padding: 18px; border: 1px solid #b8dfc4; border-radius: var(--radius-lg); background: linear-gradient(145deg, #f5fbf6, #ffffff); box-shadow: var(--shadow-sm); }
+.transaction-receipt-status { display: flex; align-items: center; gap: 10px; color: var(--color-passed); }
+.transaction-receipt-status > div { display: flex; flex-direction: column; gap: 2px; }
+.transaction-receipt-status span { color: var(--color-text-muted); font-size: 0.75rem; }
+.transaction-receipt dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+.transaction-receipt dl > div { min-width: 0; padding: 10px 12px; border-radius: var(--radius-md); background: rgba(255,255,255,0.8); }
+.transaction-receipt dt { color: var(--color-text-muted); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.transaction-receipt dd { overflow: hidden; margin: 4px 0 0; color: var(--color-text); font-family: monospace; font-size: 0.8125rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.transaction-receipt-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.transaction-receipt-compact { padding: 14px; }
+.transaction-receipt-compact dl { margin: 10px 0; }
+@media (max-width: 480px) { .transaction-receipt dl { grid-template-columns: 1fr; } .transaction-receipt-actions .btn { flex: 1; } }
+
 /* ── Mobile Navbar ──────────────────────────────────────────────────────── */
 .wallet-badge {
   display: flex; align-items: center; gap: 8px;

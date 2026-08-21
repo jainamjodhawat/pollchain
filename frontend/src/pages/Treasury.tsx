@@ -3,7 +3,6 @@ import {
   Landmark,
   ArrowDownLeft,
   ArrowUpRight,
-  CheckCircle,
   AlertCircle,
   ExternalLink,
   Activity,
@@ -12,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useWallet } from "../hooks/useWallet";
+import TransactionReceipt from "../components/TransactionReceipt";
 import { fetchTreasuryBalance, fetchTreasuryTxs, depositTreasury } from "../utils/contracts";
 import { formatPoll } from "../utils/stellar";
 import { TOKEN_DECIMALS, TREASURY_CONTRACT_ID } from "../utils/constants";
@@ -550,12 +550,7 @@ export default function Treasury() {
                 </button>
               </div>
               {txHash && (
-                <div className="alert alert-success">
-                  <CheckCircle size={14} /> Deposit transaction completed!{" "}
-                  <a href={`https://stellar.expert/explorer/testnet/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", fontWeight: 700 }}>
-                    View on Stellar Expert ↗
-                  </a>
-                </div>
+                <TransactionReceipt action="Treasury deposit" hash={txHash} publicKey={wallet.publicKey} compact />
               )}
               {error && <div className="alert alert-error"><AlertCircle size={14} /> {error}</div>}
             </div>

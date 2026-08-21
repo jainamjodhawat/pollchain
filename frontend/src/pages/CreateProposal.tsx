@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Info, CheckCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, Info, CheckCircle } from "lucide-react";
 import { useWallet } from "../hooks/useWallet";
 import { usePollBalance } from "../hooks/usePollBalance";
 import { createProposal } from "../utils/contracts";
 import { formatPoll } from "../utils/stellar";
+import TransactionReceipt from "../components/TransactionReceipt";
 
 type TemplateKey = "budget" | "param" | "grant" | "custom";
 
@@ -99,10 +100,9 @@ export default function CreateProposal() {
             <p style={{ marginBottom: 8 }}>
               "<strong>{title}</strong>" is now live for community voting.
             </p>
-            <a href={`https://stellar.expert/explorer/testnet/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.8125rem", color: "var(--color-accent)", marginBottom: 28 }}>
-              View transaction <ExternalLink size={12} />
-            </a>
+            <div style={{ maxWidth: 560, margin: "20px auto 28px", textAlign: "left" }}>
+              <TransactionReceipt action="Proposal created" hash={txHash} publicKey={wallet.publicKey} />
+            </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <button className="btn btn-primary" onClick={() => navigate("/proposals")}>View Proposals</button>
               <button className="btn btn-secondary" onClick={() => { setTxHash(null); setTitle(""); setDescription(""); }}>Create Another</button>

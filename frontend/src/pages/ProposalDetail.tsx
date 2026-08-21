@@ -25,6 +25,7 @@ import {
 } from "../utils/contracts";
 import type { VotingConfig } from "../utils/contracts";
 import VoteModal from "../components/VoteModal";
+import TransactionReceipt from "../components/TransactionReceipt";
 import {
   formatPoll,
   shortenAddress,
@@ -301,18 +302,7 @@ export default function ProposalDetail() {
 
             {/* Tx confirmation */}
             {txHash && (
-              <div className="alert alert-success">
-                <CheckCircle size={16} />
-                Vote submitted and confirmed on-chain!{" "}
-                <a
-                  href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "inherit", fontWeight: 700 }}
-                >
-                  View tx ↗
-                </a>
-              </div>
+              <TransactionReceipt action="Vote submitted" hash={txHash} publicKey={wallet.publicKey} compact />
             )}
 
             {/* Vote results */}

@@ -9,6 +9,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { useWallet } from "../hooks/useWallet";
+import TransactionReceipt from "../components/TransactionReceipt";
 import { usePollBalance } from "../hooks/usePollBalance";
 import {
   fetchDelegate,
@@ -331,12 +332,7 @@ export default function Delegate() {
                   </span>
                 </div>
                 {txHash && (
-                  <div className="alert alert-success">
-                    <CheckCircle size={16} /> Delegation transaction recorded!{" "}
-                    <a href={`https://stellar.expert/explorer/testnet/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", fontWeight: 700 }}>
-                      View transaction ↗
-                    </a>
-                  </div>
+                  <TransactionReceipt action="Delegation updated" hash={txHash} publicKey={wallet.publicKey} compact />
                 )}
                 {error && <div className="alert alert-error"><AlertCircle size={16} /> {error}</div>}
               </div>

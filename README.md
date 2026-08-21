@@ -15,6 +15,7 @@ The [Level 5 evidence matrix](docs/LEVEL5_EVIDENCE.md) is the submission source 
 - [50-wallet analysis workbook](docs/evidence/level5-workbook/PollChain_Level5_User_Analysis.xlsx) · [dashboard preview](docs/evidence/level5-workbook/dashboard.png)
 - [Growth and retention strategy](docs/GROWTH_STRATEGY.md)
 - [Updated walkthrough script](docs/DEMO_SCRIPT.md)
+- [Narrated Level 5 product walkthrough](docs/evidence/level5-demo/PollChain_Level5_Walkthrough.mp4) · [`3abb232`](https://github.com/jainamjodhawat/pollchain/commit/3abb232)
 - [Existing product demo](https://drive.google.com/file/d/15bN3Q3Ho2Wd_1nERBiSsWyTZvWUEAMKx/view?usp=sharing)
 
 Level 5 product improvements were committed separately by the repository owner:

@@ -14,10 +14,10 @@ This page is the reviewer index for PollChain's user-growth and product-iteratio
 | Product improvements | Ready | Shared wallet session, guided onboarding and reusable transaction receipts are linked below. |
 | Updated documentation | Ready | This matrix, [growth strategy](GROWTH_STRATEGY.md), [demo script](DEMO_SCRIPT.md) and main README. |
 | Existing product demo | Available | [Current walkthrough](https://drive.google.com/file/d/15bN3Q3Ho2Wd_1nERBiSsWyTZvWUEAMKx/view?usp=sharing) |
-| Updated Level 5 walkthrough | Pending recording | Record after the deployed Level 5 UI is verified so the video matches the submitted build. |
+| Updated Level 5 walkthrough | Ready | [Narrated six-minute product walkthrough](evidence/level5-demo/PollChain_Level5_Walkthrough.mp4), generated from verified production captures in [`3abb232`](https://github.com/jainamjodhawat/pollchain/commit/3abb232). |
 | 50 different real wallet interactions | Pending real testers | No wallets or transactions are fabricated. The workbook and validator are ready for the tester session. |
 | 2–3 minute transaction interval | Pending real testers | The workbook calculates each interval and the strict validation command rejects evidence outside the range. |
-| Transaction/analytics screenshots | Pending campaign | Capture the completed workbook dashboard and StellarExpert transaction activity after validation. |
+| Transaction/analytics screenshots | Pending campaign | The updated UI is captured in the walkthrough. Final transaction screenshots still require the completed 50-wallet campaign. |
 
 ## Level 5 product iteration commits
 
@@ -44,4 +44,3 @@ The command checks unique wallet addresses, unique transaction hashes, exact Ste
 ## Google Forms scope
 
 No Google Form was created or edited in this Level 5 pass, as requested by the repository owner. The workbook provides the offline intake and analysis workflow without publishing personal information.
-

@@ -1,6 +1,6 @@
 # PollChain Level 5 Demo Script
 
-Use this outline to record the final 5–7 minute walkthrough after the Level 5 deployment and real-user campaign are complete.
+The current [narrated Level 5 walkthrough](evidence/level5-demo/PollChain_Level5_Walkthrough.mp4) covers the verified production UI and honestly identifies the campaign as pending. Use this outline again after the real-user campaign to add the final wallet and transaction-evidence segment.
 
 ## 1. Problem and product — 45 seconds
 
@@ -29,4 +29,3 @@ Open the completed workbook dashboard and show 50 unique wallets, evidence-ready
 ## 7. Learning and roadmap — 45 seconds
 
 Summarize the top feedback theme, show the linked improvement commit and explain the next product decision. End on the live application and public repository URLs.
-

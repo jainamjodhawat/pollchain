@@ -2,8 +2,16 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 const evidencePath = path.resolve(
-  process.argv[2] ?? "docs/evidence/user-wallet-interactions.csv"
+  process.argv.find((argument) => !argument.startsWith("--") && argument.endsWith(".csv")) ??
+    "docs/evidence/user-wallet-interactions.csv"
 );
+const optionValue = (name, fallback) => {
+  const index = process.argv.indexOf(name);
+  return index >= 0 ? Number(process.argv[index + 1]) : fallback;
+};
+const minimumWallets = optionValue("--minimum", 10);
+const intervalMinimum = optionValue("--interval-min", null);
+const intervalMaximum = optionValue("--interval-max", null);
 const csv = await readFile(evidencePath, "utf8");
 const lines = csv
   .split(/\r?\n/)
@@ -38,6 +46,7 @@ const failures = [];
 const wallets = new Set();
 const transactionHashes = new Set();
 const feedbackIds = new Set();
+const timestamps = [];
 const walletPattern = /^G[A-Z2-7]{55}$/;
 const transactionPattern = /^[a-fA-F0-9]{64}$/;
 const allowedInteractions = new Set([
@@ -79,6 +88,8 @@ for (const row of rows) {
     !row.verifiedAt.endsWith("Z")
   ) {
     failures.push(`Row ${row.line}: verified_at_utc must be an ISO UTC value.`);
+  } else {
+    timestamps.push({ line: row.line, value: Date.parse(row.verifiedAt) });
   }
   if (wallets.has(row.wallet)) {
     failures.push(`Row ${row.line}: duplicate wallet address.`);
@@ -95,10 +106,26 @@ for (const row of rows) {
   feedbackIds.add(row.feedbackId);
 }
 
-if (wallets.size < 10) {
+if (wallets.size < minimumWallets) {
   failures.push(
-    `At least 10 unique real-user wallets are required; found ${wallets.size}.`
+    `At least ${minimumWallets} unique real-user wallets are required; found ${wallets.size}.`
   );
+}
+
+if (intervalMinimum !== null || intervalMaximum !== null) {
+  if (intervalMinimum === null || intervalMaximum === null) {
+    failures.push("Both --interval-min and --interval-max are required together.");
+  } else {
+    const ordered = [...timestamps].sort((a, b) => a.value - b.value);
+    for (let index = 1; index < ordered.length; index += 1) {
+      const minutes = (ordered[index].value - ordered[index - 1].value) / 60_000;
+      if (minutes < intervalMinimum || minutes > intervalMaximum) {
+        failures.push(
+          `Row ${ordered[index].line}: ${minutes.toFixed(2)} minute interval is outside ${intervalMinimum}–${intervalMaximum} minutes.`
+        );
+      }
+    }
+  }
 }
 
 if (failures.length > 0) {

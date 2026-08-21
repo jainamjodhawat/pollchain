@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Droplets, LayoutDashboard, Users, Trophy, Landmark, Vote, Plus, Info, Home, LogOut, Copy, ExternalLink, ChevronDown, FileText } from "lucide-react";
+import { Menu, X, Droplets, LayoutDashboard, Users, Trophy, Landmark, Vote, Plus, Info, Home, LogOut, Copy, ExternalLink, ChevronDown, FileText, Rocket } from "lucide-react";
 import { useWallet } from "../hooks/useWallet";
 import { shortenAddress } from "../utils/stellar";
 
 const NAV_LINKS = [
   { to: "/", label: "Home", icon: <Home size={16} /> },
+  { to: "/onboarding", label: "Start", icon: <Rocket size={16} /> },
   { to: "/proposals", label: "Proposals", icon: <Vote size={16} /> },
   { to: "/create", label: "Create", icon: <Plus size={16} /> },
   { to: "/faucet", label: "Faucet", icon: <Droplets size={16} /> },

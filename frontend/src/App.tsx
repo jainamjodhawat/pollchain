@@ -15,6 +15,7 @@ const Delegate = lazy(() => import("./pages/Delegate"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const Treasury = lazy(() => import("./pages/Treasury"));
 const MyProposals = lazy(() => import("./pages/MyProposals"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
 
 function RouteLoading() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/proposals/:id" element={<ProposalDetail />} />
           <Route path="/create" element={<CreateProposal />} />
           <Route path="/my-proposals" element={<MyProposals />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/faucet" element={<Faucet />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/delegate" element={<Delegate />} />

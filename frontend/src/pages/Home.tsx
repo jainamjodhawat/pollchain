@@ -42,6 +42,9 @@ export default function Home() {
               Create Proposal
             </Link>
           </div>
+          <Link to="/onboarding" className="hero-onboarding-link">
+            New to PollChain? Follow the three-minute testnet guide <ArrowRight size={14} />
+          </Link>
         </section>
 
         {/* Stats */}

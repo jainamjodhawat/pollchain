@@ -7,6 +7,34 @@
 
 PollChain is a lightweight governance platform that lets any community create proposals, vote with POLL tokens, and automatically execute decisions on-chain — all for fractions of a cent on Stellar.
 
+## Level 5 Reviewer Index
+
+The [Level 5 evidence matrix](docs/LEVEL5_EVIDENCE.md) is the submission source of truth. It links completed product work and marks the real-user items that remain pending rather than inventing traction.
+
+- [Professional pitch deck](docs/evidence/level5-pitch/PollChain_Level5_Pitch_Deck.pptx) · [deck preview](docs/evidence/level5-pitch/verified-montage.png)
+- [50-wallet analysis workbook](docs/evidence/level5-workbook/PollChain_Level5_User_Analysis.xlsx) · [dashboard preview](docs/evidence/level5-workbook/dashboard.png)
+- [Growth and retention strategy](docs/GROWTH_STRATEGY.md)
+- [Updated walkthrough script](docs/DEMO_SCRIPT.md)
+- [Existing product demo](https://drive.google.com/file/d/15bN3Q3Ho2Wd_1nERBiSsWyTZvWUEAMKx/view?usp=sharing)
+
+Level 5 product improvements were committed separately by the repository owner:
+
+- [`87e95b7`](https://github.com/jainamjodhawat/pollchain/commit/87e95b7) — application-wide wallet session and more reliable connect/disconnect behavior
+- [`4e055e1`](https://github.com/jainamjodhawat/pollchain/commit/4e055e1) — guided connect → fund → transact onboarding
+- [`a0e2123`](https://github.com/jainamjodhawat/pollchain/commit/a0e2123) — reusable StellarExpert activity receipts
+
+The 50-wallet campaign is not yet claimed as complete. After real testers interact, validate the public CSV with:
+
+```bash
+node scripts/validate-user-evidence.mjs \
+  docs/evidence/user-wallet-interactions.csv \
+  --minimum 50 \
+  --interval-min 2 \
+  --interval-max 3
+```
+
+Per owner instruction, this pass does not create or edit a Google Form. Personal tester details stay in the workbook's private intake sheet and are excluded from public evidence.
+
 ## Level 4 Reviewer Index
 
 The [Level 4 evidence matrix](docs/LEVEL4_EVIDENCE.md) links the production

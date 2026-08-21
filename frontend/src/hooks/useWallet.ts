@@ -1,8 +1,28 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  createContext,
+  createElement,
+  useState,
+  useEffect,
+  useCallback,
+  useContext,
+  useRef,
+  type ReactNode,
+} from "react";
 import { checkWalletConnection, connectWallet } from "../utils/wallet";
 import type { WalletState } from "../utils/wallet";
 
-export function useWallet() {
+interface WalletContextValue {
+  wallet: WalletState;
+  loading: boolean;
+  connect: () => Promise<WalletState>;
+  disconnect: () => void;
+  refresh: () => Promise<WalletState>;
+}
+
+const WalletContext = createContext<WalletContextValue | null>(null);
+const DISCONNECTED_KEY = "pollchain.wallet.explicitly-disconnected";
+
+export function WalletProvider({ children }: { children: ReactNode }) {
   const [wallet, setWallet] = useState<WalletState>({
     connected: false,
     publicKey: null,
@@ -11,13 +31,29 @@ export function useWallet() {
   const [loading, setLoading] = useState(true);
   const connectionRequest = useRef<Promise<WalletState> | null>(null);
 
+  const refresh = useCallback(async () => {
+    if (sessionStorage.getItem(DISCONNECTED_KEY) === "true") {
+      const disconnected = { connected: false, publicKey: null, error: null };
+      setWallet(disconnected);
+      setLoading(false);
+      return disconnected;
+    }
+
+    const state = await checkWalletConnection();
+    setWallet(state);
+    setLoading(false);
+    return state;
+  }, []);
+
   useEffect(() => {
     let active = true;
-    checkWalletConnection().then((state) => {
+    const restore = async () => {
+      const state = await checkWalletConnection();
       if (!active) return;
-      setWallet(state);
+      if (sessionStorage.getItem(DISCONNECTED_KEY) !== "true") setWallet(state);
       setLoading(false);
-    });
+    };
+    void restore();
     return () => { active = false; };
   }, []);
 
@@ -29,6 +65,7 @@ export function useWallet() {
     try {
       const state = await request;
       setWallet(state);
+      if (state.connected) sessionStorage.removeItem(DISCONNECTED_KEY);
       return state;
     } finally {
       connectionRequest.current = null;
@@ -37,8 +74,19 @@ export function useWallet() {
   }, []);
 
   const disconnect = useCallback(() => {
+    sessionStorage.setItem(DISCONNECTED_KEY, "true");
     setWallet({ connected: false, publicKey: null, error: null });
   }, []);
 
-  return { wallet, loading, connect, disconnect };
+  return createElement(
+    WalletContext.Provider,
+    { value: { wallet, loading, connect, disconnect, refresh } },
+    children
+  );
+}
+
+export function useWallet() {
+  const context = useContext(WalletContext);
+  if (!context) throw new Error("useWallet must be used inside WalletProvider");
+  return context;
 }
